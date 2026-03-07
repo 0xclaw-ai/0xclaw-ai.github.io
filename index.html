@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>0xClaw — Autonomous AI Hackathon Agent</title>
+  <meta name="description" content="An AI that enters hackathons itself. Give it a URL. It researches, plans, codes, tests, and submits — autonomously." />
+  <meta property="og:title" content="0xClaw — Autonomous AI Hackathon Agent" />
+  <meta property="og:description" content="An AI that enters hackathons itself. Give it a URL. It ships." />
+  <meta property="og:image" content="assets/0xClaw_combine.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/0xclaw_logo.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Variables ──────────────────────────────── */
+    :root {
+      --bg:           #0a0814;
+      --bg-surface:   #0f0b1e;
+      --purple:       #7c3aed;
+      --purple-light: #a78bfa;
+      --gold:         #fbbf24;
+      --cyan:         #22d3ee;
+      --text:         #f0eeff;
+      --text-muted:   #6b6880;
+      --text-dim:     #312e4a;
+      --border:       rgba(124, 58, 237, 0.12);
+      --border-faint: rgba(255, 255, 255, 0.05);
+    }
+
+    /* ── Reset ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Nav ────────────────────────────────────── */
+    nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 100;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(1.25rem, 5vw, 3.5rem);
+      background: rgba(10, 8, 20, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .nav-brand img { height: 28px; width: auto; }
+    .nav-brand span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-link svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      background: var(--purple);
+      color: #fff;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .nav-cta:hover {
+      background: #6d28d9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+      color: #fff;
+    }
+
+    /* ── Hero ───────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem clamp(1.25rem, 5vw, 3.5rem) 5rem;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    /* Layered ambient glow */
+    .hero-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .hero-glow::before {
+      content: '';
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 720px;
+      height: 720px;
+      background: radial-gradient(circle, rgba(124,58,237,0.14) 0%, transparent 65%);
+      filter: blur(1px);
+    }
+    .hero-glow::after {
+      content: '';
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(251,191,36,0.07) 0%, transparent 60%);
+    }
+
+    /* Subtle noise grain overlay */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+    }
+
+    .hero-visual {
+      position: relative;
+      margin-bottom: 2.75rem;
+      opacity: 0;
+      animation: riseIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+    }
+    .hero-visual img {
+      width: clamp(260px, 42vw, 460px);
+      height: auto;
+      filter:
+        drop-shadow(0 0 36px rgba(124, 58, 237, 0.55))
+        drop-shadow(0 0 80px rgba(124, 58, 237, 0.18))
+        drop-shadow(0 0 12px rgba(251, 191, 36, 0.12));
+      animation: float 7s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-14px); }
+    }
+
+    .hero-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 1.125rem;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.45s forwards;
+    }
+
+    .hero-title {
+      font-size: clamp(2.25rem, 5.5vw, 4.25rem);
+      font-weight: 800;
+      line-height: 1.09;
+      letter-spacing: -0.035em;
+      color: var(--text);
+      max-width: 780px;
+      margin: 0 auto 1.25rem;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.58s forwards;
+    }
+    .hero-title .accent {
+      background: linear-gradient(125deg, var(--gold) 0%, #f97316 55%, #ef4444 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(0.95rem, 1.8vw, 1.125rem);
+      color: var(--text-muted);
+      max-width: 460px;
+      margin: 0 auto 2.75rem;
+      line-height: 1.65;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.7s forwards;
+    }
+
+    .hero-btns {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: riseIn 0.7s ease 0.82s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.375rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, background 0.18s, border-color 0.18s;
+    }
+    .btn svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+    .btn-fill {
+      background: var(--purple);
+      color: #fff;
+      border: 1px solid transparent;
+    }
+    .btn-fill:hover {
+      background: #6d28d9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(124, 58, 237, 0.38);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+
+    /* Scroll indicator */
+    .scroll-cue {
+      position: absolute;
+      bottom: 2.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      animation: riseIn 0.8s ease 1.4s forwards;
+    }
+    .scroll-cue span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .scroll-cue::after {
+      content: '';
+      width: 1px;
+      height: 38px;
+      background: linear-gradient(to bottom, rgba(124,58,237,0.5), transparent);
+      animation: tickDown 2.2s ease-in-out infinite;
+    }
+    @keyframes tickDown {
+      0%   { transform: scaleY(0) translateY(0); transform-origin: top; opacity: 1; }
+      50%  { transform: scaleY(1) translateY(0); transform-origin: top; opacity: 1; }
+      100% { transform: scaleY(1) translateY(8px); transform-origin: top; opacity: 0; }
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Divider ────────────────────────────────── */
+    .divider {
+      max-width: 900px;
+      margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+
+    /* ── Story ──────────────────────────────────── */
+    .story {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: clamp(5rem, 10vw, 9rem) clamp(1.25rem, 5vw, 3.5rem);
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .story.visible { opacity: 1; transform: translateY(0); }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 2rem;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--purple);
+    }
+
+    .story-headline {
+      font-size: clamp(1.75rem, 4vw, 2.875rem);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.028em;
+      color: var(--text);
+      margin-bottom: 2rem;
+      max-width: 680px;
+    }
+    .story-headline em {
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    .story-body {
+      font-size: clamp(0.9rem, 1.4vw, 1.05rem);
+      color: var(--text-muted);
+      line-height: 1.85;
+      max-width: 580px;
+    }
+    .story-body strong { color: var(--text); font-weight: 500; }
+
+    /* ── Stats grid ─────────────────────────────── */
+    .stats-wrap {
+      padding: 0 clamp(1.25rem, 5vw, 3.5rem) clamp(5rem, 10vw, 9rem);
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.9s ease 0.15s, transform 0.9s ease 0.15s;
+    }
+    .stats-wrap.visible { opacity: 1; transform: translateY(0); }
+
+    .stats-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat {
+      padding: 2rem 1.75rem;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .stat:last-child { border-right: none; }
+    @media (max-width: 640px) {
+      .stat:nth-child(2) { border-right: none; }
+      .stat:nth-child(3) { border-right: 1px solid var(--border); }
+      .stat:nth-child(1),
+      .stat:nth-child(2) { border-bottom: 1px solid var(--border); }
+    }
+
+    .stat-n {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.125rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .stat-n.c-gold   { color: var(--gold); }
+    .stat-n.c-purple { color: var(--purple-light); }
+    .stat-n.c-cyan   { color: var(--cyan); }
+    .stat-n.c-white  { color: var(--text); }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Footer ─────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.75rem clamp(1.25rem, 5vw, 3.5rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .footer-brand img { height: 22px; }
+    .footer-brand span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .footer-links a {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-byline {
+      width: 100%;
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 0.125rem;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media (max-width: 520px) {
+      .nav-link span { display: none; }
+      footer { justify-content: center; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <a class="nav-brand" href="/">
+      <img src="assets/0xclaw_logo.png" alt="0xClaw logo" />
+      <span>0xClaw</span>
+    </a>
+    <div class="nav-actions">
+      <a class="nav-link" href="https://github.com/0xclaw-ai/0xClaw" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        <span>GitHub</span>
+      </a>
+      <a class="nav-cta" href="https://discord.gg/rdnYEVdRHe" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+        </svg>
+        Discord
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+
+    <div class="hero-visual">
+      <img src="assets/0xClaw_combine.png" alt="0xClaw — Autonomous AI Hackathon Agent" />
+    </div>
+
+    <p class="hero-tag">Autonomous AI Hackathon Agent</p>
+
+    <h1 class="hero-title">
+      An AI that entered<br/>
+      <span class="accent">a hackathon itself.</span>
+    </h1>
+
+    <p class="hero-sub">
+      Give it a URL. It researches, plans, codes, tests, and submits &mdash; entirely on its own.
+    </p>
+
+    <div class="hero-btns">
+      <a class="btn btn-fill" href="https://github.com/0xclaw-ai/0xClaw" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        View on GitHub
+      </a>
+      <a class="btn btn-ghost" href="https://discord.gg/rdnYEVdRHe" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+        </svg>
+        Join Discord
+      </a>
+    </div>
+
+    <div class="scroll-cue" aria-hidden="true"><span>scroll</span></div>
+  </section>
+
+  <!-- Divider -->
+  <div class="divider"></div>
+
+  <!-- Story -->
+  <section class="story" id="story">
+    <p class="section-label">the meta-story</p>
+    <h2 class="story-headline">
+      The submission <em>is</em> the story.<br/>
+      The agent <em>is</em> the contestant.
+    </h2>
+    <p class="story-body">
+      0xClaw was handed a single URL &mdash; the hackathon registration page.<br/><br/>
+      It <strong>researched</strong> the requirements, <strong>generated</strong> ideas,
+      <strong>selected</strong> the best approach, produced a <strong>technical plan</strong>,
+      <strong>implemented</strong> a working project, ran <strong>tests</strong>, and wrote the
+      full <strong>submission docs</strong> &mdash; without a human writing a single line for it.<br/><br/>
+      Seven phases. Zero shortcuts.
+    </p>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-wrap" id="stats">
+    <div class="stats-grid">
+      <div class="stat">
+        <span class="stat-n c-gold">7</span>
+        <span class="stat-label">Autonomous phases</span>
+      </div>
+      <div class="stat">
+        <span class="stat-n c-purple">32</span>
+        <span class="stat-label">Tests passing</span>
+      </div>
+      <div class="stat">
+        <span class="stat-n c-cyan">0</span>
+        <span class="stat-label">Humans writing code</span>
+      </div>
+      <div class="stat">
+        <span class="stat-n c-white">MIT</span>
+        <span class="stat-label">Open source</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-brand">
+      <img src="assets/0xclaw_logo.png" alt="0xClaw" />
+      <span>0xClaw</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/0xclaw-ai/0xClaw" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/rdnYEVdRHe" target="_blank" rel="noopener">Discord</a>
+      <a href="https://github.com/0xclaw-ai/0xClaw/blob/master/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    </div>
+    <p class="footer-byline">// built by an ai · for a hackathon · about ai</p>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.12 }
+    );
+    document.querySelectorAll('.story, .stats-wrap').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
