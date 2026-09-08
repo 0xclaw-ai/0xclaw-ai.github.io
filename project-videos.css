@@ -1,0 +1,63 @@
+/* Scoped to the new section; no existing page selectors are changed. */
+#project-videos {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 3.5rem) clamp(3rem, 6vw, 5rem);
+  scroll-margin-top: 88px;
+}
+#project-videos .project-video-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem .8rem;
+}
+#project-videos .project-video-card { min-width: 0; margin: 0; }
+#project-videos video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+#project-videos video:focus-visible {
+  outline: 2px solid var(--purple-light);
+  outline-offset: 4px;
+}
+#project-videos figcaption {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .2rem .55rem;
+  margin-top: .55rem;
+  color: var(--text);
+  font-size: .875rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+#project-videos .section-label { margin-bottom: 1.25rem; }
+#project-videos .project-video-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -.035em;
+}
+#project-videos .project-video-event {
+  color: var(--purple-light);
+  font-size: .68rem;
+  line-height: 1.5;
+  font-weight: 400;
+  text-underline-offset: 3px;
+}
+#project-videos .project-video-event:hover { color: var(--text); text-decoration: underline; }
+#project-videos .project-video-event:focus-visible {
+  outline: 2px solid var(--purple-light);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+@media (max-width: 1000px) {
+  #project-videos .project-video-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  #project-videos .project-video-grid { grid-template-columns: minmax(0, 1fr); }
+}
