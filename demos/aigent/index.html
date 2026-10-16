@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIGent Protocol — Interactive Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png" />
+  <link rel="stylesheet" href="../shared.css" />
+  <style>
+    :root { --accent: #08b9d2; --accent-2: #65e4f2; --bg: #061522; --surface: #0b2030; --surface-2: #102a3b; }
+    .app-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+    .app-tabs { max-width: 580px; flex: 1; }
+    .wallet { padding: .55rem .75rem; border: 1px solid rgba(8,185,210,.22); border-radius: 8px; color: var(--accent-2); background: rgba(8,185,210,.06); cursor: pointer; font-size: .67rem; }
+    .agent-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .75rem; margin-top: .8rem; }
+    .agent-card { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.025); cursor: pointer; transition: .18s; }
+    .agent-card:hover { border-color: rgba(8,185,210,.35); transform: translateY(-2px); }
+    .agent-card h3 { font-size: .8rem; }
+    .agent-card p { margin-top: .32rem; color: var(--muted); font-size: .61rem; }
+    .capabilities { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .75rem; }
+    .capabilities span { padding: .25rem .4rem; border: 1px solid rgba(8,185,210,.15); border-radius: 999px; color: #8ebbc7; font-size: .52rem; }
+    .agent-footer { display: flex; justify-content: space-between; margin-top: .75rem; padding-top: .65rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .56rem; }
+    .cap-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: .55rem; }
+    .cap-option { display: flex; align-items: center; gap: .5rem; padding: .65rem; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: .68rem; cursor: pointer; }
+    .cap-option:has(input:checked) { color: var(--text); border-color: rgba(8,185,210,.4); background: rgba(8,185,210,.07); }
+    .cap-option input { accent-color: var(--accent); }
+    .command-layout { display: grid; grid-template-columns: minmax(0,.85fr) minmax(340px,1.15fr); gap: .8rem; }
+    .command-presets { margin-top: .7rem; }
+    .intent { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55rem; margin-top: .75rem; }
+    .intent div { padding: .65rem; border: 1px solid var(--line); border-radius: 7px; }
+    .intent span { display: block; color: var(--muted); font-size: .53rem; text-transform: uppercase; }
+    .intent strong { display: block; margin-top: .28rem; color: var(--accent-2); font-size: .72rem; }
+    .reasoning { margin-top: .7rem; color: var(--muted); font-size: .67rem; line-height: 1.55; }
+    .plan-list { display: grid; gap: .55rem; margin-top: .8rem; }
+    .plan-step { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: .65rem; padding: .7rem; border: 1px solid var(--line); border-radius: 8px; }
+    .step-index { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--accent-2); background: rgba(8,185,210,.1); font: 700 .6rem ui-monospace, monospace; }
+    .plan-step h4 { font-size: .7rem; }
+    .plan-step p { margin-top: .2rem; color: var(--muted); font-size: .57rem; }
+    .plan-step code { color: var(--muted); font-size: .54rem; }
+    .plan-step.running { border-color: rgba(8,185,210,.4); background: rgba(8,185,210,.05); }
+    .plan-step.done .step-index { color: #062116; background: var(--success); }
+    .execution-result { margin-top: .8rem; padding: .75rem; border: 1px solid rgba(67,209,158,.2); border-radius: 8px; color: #b9edd9; background: rgba(67,209,158,.06); font-size: .68rem; }
+    .history-list { display: grid; gap: .5rem; margin-top: .8rem; }
+    .history-row { display: flex; justify-content: space-between; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid var(--line); font-size: .65rem; }
+    .history-row span { color: var(--muted); }
+    @media (max-width: 800px) { .agent-grid { grid-template-columns: 1fr; } .command-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) { .app-nav { align-items: stretch; flex-direction: column; } .cap-select, .intent { grid-template-columns: 1fr; } .plan-step { grid-template-columns: 28px 1fr; } .plan-step code { grid-column: 2; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">◉</span> AIGent Protocol</div>
+    <div class="demo-mode">Simulation · no wallet · no blockchain</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <div class="app-nav">
+      <div class="tabs app-tabs">
+        <button class="tab active" data-view="dashboard">Dashboard</button>
+        <button class="tab" data-view="create">Create agent</button>
+        <button class="tab" data-view="command">Command center</button>
+      </div>
+      <button class="wallet" id="wallet">Connect demo wallet</button>
+    </div>
+
+    <section id="dashboard-view">
+      <div class="hero-copy"><p class="kicker">Autonomous DeFi agents · simulated</p><h1>One command.<br />A complete execution plan.</h1><p>Create a local demo agent and give it one of several distinct DeFi tasks. Every transaction shown here is generated for this preview only.</p></div>
+      <div class="grid-3" id="metrics"></div>
+      <div class="panel panel-pad" style="margin-top:.8rem">
+        <div class="panel-title"><h2>Your agents</h2><button class="btn ghost" id="new-agent">Create new agent</button></div>
+        <div class="agent-grid" id="agents"></div>
+      </div>
+      <div class="panel panel-pad" style="margin-top:.8rem">
+        <div class="panel-title"><h2>Recent simulated executions</h2><span class="badge">Local state</span></div>
+        <div class="history-list" id="history"></div>
+      </div>
+    </section>
+
+    <section class="hidden" id="create-view">
+      <div class="hero-copy"><p class="kicker">Agent configuration</p><h1>Create a demo agent.</h1><p>Unlike the original prototype, the fields below persist into the dashboard and command center for this session.</p></div>
+      <div class="panel panel-pad" style="max-width:760px">
+        <form id="agent-form">
+          <div class="field"><label for="agent-name">Agent name</label><input class="input" id="agent-name" required value="Treasury Scout" /></div>
+          <div class="field"><label>Capabilities</label>
+            <div class="cap-select">
+              <label class="cap-option"><input type="checkbox" name="cap" value="swap" checked /> Token swaps</label>
+              <label class="cap-option"><input type="checkbox" name="cap" value="stake" checked /> Lending & staking</label>
+              <label class="cap-option"><input type="checkbox" name="cap" value="liquidity" /> Liquidity pools</label>
+              <label class="cap-option"><input type="checkbox" name="cap" value="withdraw" /> Withdrawals</label>
+            </div>
+          </div>
+          <div class="grid-2" style="grid-template-columns:1fr 1fr;margin-top:.8rem">
+            <div class="field"><label for="model">Model</label><select id="model"><option>GPT-4o Mini</option><option>Claude 3.5 Sonnet</option><option>Local Llama</option></select></div>
+            <div class="field"><label for="network">Network</label><select id="network"><option>Ethereum</option><option>Arbitrum</option><option>Polygon</option></select></div>
+          </div>
+          <div class="btn-row"><button class="btn secondary" type="button" data-go="dashboard">Cancel</button><button class="btn" type="submit">Create local agent</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="hidden" id="command-view">
+      <div class="hero-copy"><p class="kicker">Natural-language command planner</p><h1>Command center.</h1><p>Preset and typed commands map to different deterministic plans, so the output visibly follows the requested action.</p></div>
+      <div class="command-layout">
+        <div class="panel panel-pad">
+          <div class="field"><label for="command-agent">Agent</label><select id="command-agent"></select></div>
+          <div class="field"><label for="command">Command</label><textarea id="command">Swap 1 ETH for USDC and stake it in Aave</textarea></div>
+          <div class="chip-row command-presets">
+            <button class="chip" data-command="Swap 1 ETH for USDC and stake it in Aave">Swap + stake</button>
+            <button class="chip" data-command="Provide 1 ETH and 2000 USDC liquidity to Uniswap">Add liquidity</button>
+            <button class="chip" data-command="Withdraw 100 USDC from Aave">Withdraw</button>
+          </div>
+          <button class="btn" id="parse" style="margin-top:1rem;width:100%">Parse command</button>
+        </div>
+
+        <div class="panel panel-pad">
+          <div id="plan-empty" class="empty">Parse a command to generate an execution plan.</div>
+          <div class="hidden" id="plan-output">
+            <div class="panel-title"><h2>Parsed intent</h2><span class="badge success" id="confidence">95% confidence</span></div>
+            <div class="intent" id="intent"></div>
+            <p class="reasoning" id="reasoning"></p>
+            <div class="plan-list" id="plan-list"></div>
+            <div class="btn-row"><button class="btn" id="execute">Execute simulation</button><button class="btn secondary" id="clear-plan">Clear</button></div>
+            <div class="execution-result hidden" id="execution-result"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var state = {
+        wallet: false,
+        agents: [{ id: "agent_01", name: "Demo Agent", caps: ["swap", "stake", "liquidity"], model: "GPT-4o Mini", network: "Ethereum", executions: 2 }],
+        history: [
+          { command: "Rebalance ETH and USDC", agent: "Demo Agent", status: "Completed" },
+          { command: "Supply 500 USDC to Aave", agent: "Demo Agent", status: "Completed" }
+        ],
+        plan: null
+      };
+
+      function switchView(view) {
+        ["dashboard", "create", "command"].forEach(function (name) {
+          document.getElementById(name + "-view").classList.toggle("hidden", name !== view);
+        });
+        document.querySelectorAll("[data-view]").forEach(function (tab) { tab.classList.toggle("active", tab.dataset.view === view); });
+        if (view === "dashboard") renderDashboard();
+        if (view === "command") renderAgentSelect();
+      }
+      function showToast(message) {
+        var toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(function () { toast.classList.remove("show"); }, 1700);
+      }
+      function html(input) { return String(input).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]; }); }
+      function renderDashboard() {
+        var total = state.agents.reduce(function (sum, agent) { return sum + agent.executions; }, 0);
+        document.getElementById("metrics").innerHTML =
+          '<div class="metric"><span>Total agents</span><strong>' + state.agents.length + '</strong></div>' +
+          '<div class="metric"><span>Simulated executions</span><strong>' + total + '</strong></div>' +
+          '<div class="metric"><span>Wallet status</span><strong style="font-size:1rem;color:' + (state.wallet ? "var(--success)" : "var(--muted)") + '">' + (state.wallet ? "Demo connected" : "Not connected") + '</strong></div>';
+        document.getElementById("agents").innerHTML = state.agents.map(function (agent) {
+          return '<article class="agent-card" data-agent="' + html(agent.id) + '"><div style="display:flex;justify-content:space-between;gap:.5rem"><h3>' + html(agent.name) + '</h3><span class="badge success">Active</span></div><p>' + html(agent.model) + ' · ' + html(agent.network) + '</p><div class="capabilities">' + agent.caps.map(function (cap) { return "<span>" + html(cap) + "</span>"; }).join("") + '</div><div class="agent-footer"><span>' + agent.executions + ' runs</span><span>Give command →</span></div></article>';
+        }).join("");
+        document.querySelectorAll("[data-agent]").forEach(function (card) {
+          card.addEventListener("click", function () {
+            switchView("command");
+            document.getElementById("command-agent").value = card.dataset.agent;
+          });
+        });
+        document.getElementById("history").innerHTML = state.history.length ? state.history.map(function (item) {
+          return '<div class="history-row"><div><strong>' + html(item.command) + '</strong><br><span>' + html(item.agent) + '</span></div><span class="badge success">' + html(item.status) + '</span></div>';
+        }).join("") : '<div class="empty">No simulated executions yet.</div>';
+      }
+      function renderAgentSelect() {
+        document.getElementById("command-agent").innerHTML = state.agents.map(function (agent) { return '<option value="' + html(agent.id) + '">' + html(agent.name) + '</option>'; }).join("");
+      }
+      function selectedAgent() {
+        var id = document.getElementById("command-agent").value;
+        return state.agents.find(function (agent) { return agent.id === id; }) || state.agents[0];
+      }
+      function buildPlan(command) {
+        var lower = command.toLowerCase();
+        var amountMatch = command.match(/\d+(?:\.\d+)?/);
+        var amount = amountMatch ? amountMatch[0] : "1";
+        if (lower.indexOf("liquidity") > -1 || lower.indexOf("pool") > -1) {
+          return { intent: "Provide liquidity", protocol: "Uniswap", risk: "Medium", confidence: 92, reasoning: "The command requests a two-asset liquidity position. Token approvals must complete before the pool deposit.", steps: [["Approve ETH", "Authorize the router for " + amount + " ETH", "48k gas"], ["Approve USDC", "Authorize the paired USDC amount", "52k gas"], ["Add liquidity", "Deposit both assets into the ETH/USDC pool", "228k gas"]] };
+        }
+        if (lower.indexOf("withdraw") > -1 || lower.indexOf("unstake") > -1) {
+          return { intent: "Withdraw asset", protocol: "Aave", risk: "Low", confidence: 97, reasoning: "The command maps to a single lending-pool withdrawal with the requested amount.", steps: [["Check position", "Read the available Aave balance", "0 gas"], ["Withdraw USDC", "Withdraw " + amount + " USDC to the demo wallet", "176k gas"]] };
+        }
+        if (lower.indexOf("swap") > -1 && lower.indexOf("stake") > -1) {
+          return { intent: "Swap and stake", protocol: "Uniswap → Aave", risk: "Low", confidence: 95, reasoning: "The request contains two dependent operations: receive USDC from a swap, then approve and supply that USDC to Aave.", steps: [["Swap", "Swap " + amount + " ETH for estimated USDC", "150k gas"], ["Approve", "Approve USDC for the Aave pool", "50k gas"], ["Supply", "Supply received USDC to Aave", "200k gas"]] };
+        }
+        if (lower.indexOf("swap") > -1) {
+          return { intent: "Token swap", protocol: "Uniswap", risk: "Low", confidence: 89, reasoning: "The command maps to a direct token swap using a bounded-slippage route.", steps: [["Quote", "Calculate a deterministic demo quote", "0 gas"], ["Swap", "Execute the simulated token exchange", "155k gas"]] };
+        }
+        return { intent: "Inspect and plan", protocol: "Read only", risk: "None", confidence: 74, reasoning: "No supported action keyword was found, so the agent creates a safe read-only inspection plan.", steps: [["Inspect wallet", "Read balances and active positions", "0 gas"], ["Recommend", "Return suggested next actions without execution", "0 gas"]] };
+      }
+      function renderPlan() {
+        var plan = state.plan;
+        document.getElementById("plan-empty").classList.add("hidden");
+        document.getElementById("plan-output").classList.remove("hidden");
+        document.getElementById("confidence").textContent = plan.confidence + "% confidence";
+        document.getElementById("intent").innerHTML =
+          '<div><span>Intent</span><strong>' + html(plan.intent) + '</strong></div>' +
+          '<div><span>Protocol</span><strong>' + html(plan.protocol) + '</strong></div>' +
+          '<div><span>Risk</span><strong>' + html(plan.risk) + '</strong></div>';
+        document.getElementById("reasoning").textContent = plan.reasoning;
+        document.getElementById("plan-list").innerHTML = plan.steps.map(function (step, index) {
+          return '<article class="plan-step" data-plan-step="' + index + '"><span class="step-index">' + (index + 1) + '</span><div><h4>' + html(step[0]) + '</h4><p>' + html(step[1]) + '</p></div><code>' + html(step[2]) + '</code></article>';
+        }).join("");
+        document.getElementById("execution-result").classList.add("hidden");
+      }
+
+      document.querySelectorAll("[data-view]").forEach(function (tab) { tab.addEventListener("click", function () { switchView(tab.dataset.view); }); });
+      document.querySelectorAll("[data-go]").forEach(function (button) { button.addEventListener("click", function () { switchView(button.dataset.go); }); });
+      document.getElementById("new-agent").addEventListener("click", function () { switchView("create"); });
+      document.getElementById("wallet").addEventListener("click", function () {
+        state.wallet = !state.wallet;
+        this.textContent = state.wallet ? "demo…8f2a connected" : "Connect demo wallet";
+        showToast(state.wallet ? "Demo wallet connected. No extension was accessed." : "Demo wallet disconnected.");
+        renderDashboard();
+      });
+      document.getElementById("agent-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var caps = Array.from(document.querySelectorAll("input[name='cap']:checked")).map(function (box) { return box.value; });
+        if (!caps.length) { showToast("Choose at least one capability."); return; }
+        state.agents.push({ id: "agent_0" + (state.agents.length + 1), name: document.getElementById("agent-name").value.trim(), caps: caps, model: document.getElementById("model").value, network: document.getElementById("network").value, executions: 0 });
+        showToast("Local agent created.");
+        switchView("dashboard");
+      });
+      document.querySelectorAll("[data-command]").forEach(function (chip) {
+        chip.addEventListener("click", function () { document.getElementById("command").value = chip.dataset.command; });
+      });
+      document.getElementById("parse").addEventListener("click", function () {
+        var button = this;
+        var command = document.getElementById("command").value.trim();
+        if (!command) return;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner"></span> Parsing command';
+        window.setTimeout(function () {
+          state.plan = buildPlan(command);
+          renderPlan();
+          button.disabled = false;
+          button.textContent = "Parse command";
+        }, 650);
+      });
+      document.getElementById("execute").addEventListener("click", function () {
+        if (!state.plan) return;
+        var button = this;
+        var steps = Array.from(document.querySelectorAll("[data-plan-step]"));
+        var result = document.getElementById("execution-result");
+        var index = 0;
+        button.disabled = true;
+        result.classList.add("hidden");
+        function next() {
+          if (index > 0) { steps[index - 1].classList.remove("running"); steps[index - 1].classList.add("done"); steps[index - 1].querySelector(".step-index").textContent = "✓"; }
+          if (index < steps.length) {
+            steps[index].classList.add("running");
+            index += 1;
+            window.setTimeout(next, 650);
+          } else {
+            var agent = selectedAgent();
+            agent.executions += 1;
+            state.history.unshift({ command: document.getElementById("command").value.trim(), agent: agent.name, status: "Completed" });
+            result.innerHTML = '<strong>Simulation completed.</strong> ' + steps.length + ' steps · demo transaction <code>0xDEMO' + String(agent.executions).padStart(4, "0") + '</code>.';
+            result.classList.remove("hidden");
+            button.disabled = false;
+            showToast("Execution recorded in local history.");
+          }
+        }
+        next();
+      });
+      document.getElementById("clear-plan").addEventListener("click", function () {
+        state.plan = null;
+        document.getElementById("plan-output").classList.add("hidden");
+        document.getElementById("plan-empty").classList.remove("hidden");
+      });
+      document.getElementById("reset").addEventListener("click", function () { window.location.reload(); });
+
+      renderDashboard();
+      renderAgentSelect();
+    }());
+  </script>
+</body>
+</html>

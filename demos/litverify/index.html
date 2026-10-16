@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LitVerify — Local Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    :root { --accent: #f4b54c; --accent-2: #ffe0a1; }
+    body { background: radial-gradient(circle at 18% -10%, rgba(244,181,76,.1), transparent 28rem), #0d0b08; }
+    .setup { display: grid; grid-template-columns: 1.2fr .72fr auto; gap: .7rem; align-items: end; margin-bottom: 1rem; }
+    .pipeline { display: grid; grid-template-columns: repeat(4,1fr); gap: .45rem; margin: .9rem 0 1rem; }
+    .agent-step { position: relative; padding: .75rem; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.018); }
+    .agent-step::after { content: ""; position: absolute; inset: auto 0 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform .4s; }
+    .agent-step.active { border-color: rgba(244,181,76,.35); }
+    .agent-step.active::after, .agent-step.done::after { transform: scaleX(1); }
+    .agent-step.done::after { background: var(--success); }
+    .agent-step span { display: block; color: var(--muted); font: .56rem ui-monospace, monospace; letter-spacing: .08em; }
+    .agent-step b { display: block; margin-top: .32rem; font-size: .68rem; }
+    .agent-step small { display: block; margin-top: .26rem; color: var(--muted); font-size: .57rem; }
+    .run-note { display: flex; align-items: center; justify-content: space-between; min-height: 24px; color: var(--muted); font-size: .63rem; }
+    .report-head { padding: 1.2rem; border-bottom: 1px solid var(--line); background: linear-gradient(120deg, rgba(244,181,76,.06), transparent 55%); }
+    .report-head h2 { margin-top: .45rem; font: 500 clamp(1.2rem,3vw,1.8rem)/1.25 Georgia, serif; letter-spacing: -.02em; }
+    .report-head p { max-width: 720px; margin-top: .55rem; color: var(--muted); font-size: .7rem; line-height: 1.65; }
+    .report-body { padding: 1.2rem; }
+    .claim-list { display: grid; gap: .7rem; }
+    .claim { display: grid; grid-template-columns: 92px minmax(0,1fr); gap: .75rem; padding: .9rem; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.016); }
+    .verdict { align-self: start; padding: .38rem .45rem; border-radius: 5px; text-align: center; font: 700 .57rem ui-monospace, monospace; letter-spacing: .04em; text-transform: uppercase; }
+    .verdict.supported { color: var(--success); background: rgba(67,209,158,.1); }
+    .verdict.mixed { color: var(--warning); background: rgba(246,189,82,.1); }
+    .verdict.contradicted { color: var(--danger); background: rgba(239,106,114,.1); }
+    .claim h3 { font: 500 .84rem/1.45 Georgia, serif; }
+    .claim p { margin-top: .4rem; color: var(--muted); font-size: .64rem; line-height: 1.58; }
+    .source { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .55rem; color: var(--accent-2); font: .57rem ui-monospace, monospace; }
+    details { margin-top: .6rem; border-top: 1px dashed var(--line); padding-top: .5rem; }
+    summary { color: #cbc5ba; cursor: pointer; font-size: .61rem; }
+    details div { margin-top: .45rem; color: var(--muted); font-size: .59rem; line-height: 1.55; }
+    .trace { display: grid; gap: .55rem; }
+    .trace-item { display: grid; grid-template-columns: 22px minmax(0,1fr); gap: .55rem; align-items: start; }
+    .trace-number { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid rgba(244,181,76,.28); border-radius: 50%; color: var(--accent); font: .58rem ui-monospace, monospace; }
+    .trace-item b { display: block; font-size: .65rem; }
+    .trace-item span { display: block; margin-top: .22rem; color: var(--muted); font-size: .59rem; line-height: 1.5; }
+    .cost-table { display: grid; gap: .45rem; }
+    .cost-row { display: flex; justify-content: space-between; gap: .8rem; padding-bottom: .45rem; border-bottom: 1px solid var(--line); font-size: .62rem; }
+    .cost-row span { color: var(--muted); }
+    .empty-report { min-height: 370px; display: grid; place-items: center; padding: 2rem; text-align: center; }
+    .empty-report .seal { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto .8rem; border: 1px solid rgba(244,181,76,.35); border-radius: 50%; color: var(--accent); font: 600 1.2rem Georgia, serif; }
+    .empty-report b { display: block; font: 500 1.1rem Georgia, serif; }
+    .empty-report p { max-width: 360px; margin-top: .5rem; color: var(--muted); font-size: .68rem; line-height: 1.6; }
+    @media (max-width: 760px) { .setup { grid-template-columns: 1fr; } .pipeline { grid-template-columns: repeat(2,1fr); } .claim { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">L</span>LitVerify</div>
+    <div class="demo-mode">Curated evidence sandbox</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <section class="hero-copy">
+      <p class="kicker">Multi-agent literature review / local preview</p>
+      <h1>From research question<br>to evidence audit.</h1>
+      <p>Choose a curated topic and watch four specialist agents assemble a claim-level review. The records are bundled demo data; the orchestration, evidence expansion, and model-dependent usage summary are interactive.</p>
+    </section>
+
+    <section class="panel panel-pad">
+      <div class="setup">
+        <div class="field"><label for="topic">Research question</label><select id="topic"><option value="transformer">What does the original Transformer architecture establish?</option><option value="crispr">Which core claims about CRISPR-Cas9 are well supported?</option><option value="agents">How do tool-using language model agents reason and act?</option></select></div>
+        <div class="field"><label for="model">Synthesis model</label><select id="model"><option value="small">0xClaw Swift · fast</option><option value="large">0xClaw Deep · thorough</option></select></div>
+        <button class="btn" id="run">Run verification</button>
+      </div>
+      <div class="pipeline" aria-label="Verification pipeline">
+        <div class="agent-step" data-step="0"><span>AGENT 01</span><b>Search planner</b><small>builds query set</small></div>
+        <div class="agent-step" data-step="1"><span>AGENT 02</span><b>Evidence reader</b><small>extracts support</small></div>
+        <div class="agent-step" data-step="2"><span>AGENT 03</span><b>Claim verifier</b><small>tests consistency</small></div>
+        <div class="agent-step" data-step="3"><span>AGENT 04</span><b>Review editor</b><small>writes synthesis</small></div>
+      </div>
+      <div class="run-note"><span id="runStatus">Ready to inspect 6 curated records.</span><span>All sources are sample metadata · no live retrieval</span></div>
+    </section>
+
+    <section class="grid-2" style="margin-top:1rem">
+      <article class="panel" id="report"><div class="empty-report"><div><div class="seal">✓</div><b>No report generated yet</b><p>Select a research question and run the four-agent verification flow. Results are deterministic so the demo stays reliable on stage.</p></div></div></article>
+      <aside class="side-stack">
+        <article class="panel panel-pad">
+          <div class="panel-title"><h2>Agent trace</h2><span class="badge" id="traceBadge">Idle</span></div>
+          <div class="trace" id="trace"><p class="small muted">Agent decisions will appear here after a run.</p></div>
+        </article>
+        <article class="panel panel-pad">
+          <div class="panel-title"><h2>Usage estimate</h2><p>simulated</p></div>
+          <div class="cost-table">
+            <div class="cost-row"><span>Evidence records</span><b id="records">—</b></div>
+            <div class="cost-row"><span>Input tokens</span><b id="tokens">—</b></div>
+            <div class="cost-row"><span>Wall time</span><b id="wallTime">—</b></div>
+            <div class="cost-row"><span>Estimated cost</span><b id="cost">—</b></div>
+          </div>
+        </article>
+        <article class="panel panel-pad">
+          <p class="kicker">Demo boundary</p>
+          <p class="small muted" style="margin-top:.6rem;line-height:1.65">This is a product interaction preview, not a live systematic review. It intentionally limits input to three curated evidence packs and identifies every output as sample data.</p>
+        </article>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var packs = {
+        transformer: {
+          title: "The original Transformer: four claims checked",
+          summary: "The curated record supports attention-only sequence modeling with parallel computation, rejects an overstatement about positional information, and catches one fabricated citation.",
+          claims: [
+            { verdict: "Supported", kind: "supported", claim: "Self-attention lets the architecture process sequence positions in parallel during training.", evidence: "The architecture removes recurrence and convolutions from its core sequence transduction design, enabling substantially more parallelization than recurrent alternatives.", source: "Vaswani et al. · NeurIPS 2017", meta: "Sample record LV-T01 · Sections 1 and 4 · confidence 0.96" },
+            { verdict: "Contradicted", kind: "contradicted", claim: "A Transformer does not need any positional information.", evidence: "Without recurrence or convolution, the original design explicitly adds positional encodings so token order can enter the representation.", source: "Vaswani et al. · NeurIPS 2017", meta: "Sample record LV-T02 · Section 3.5 · confidence 0.98" },
+            { verdict: "Supported", kind: "supported", claim: "The paper reports results on WMT 2014 English–German and English–French translation tasks.", evidence: "Both translation benchmarks are described in the evaluation, with base and big model configurations reported.", source: "Vaswani et al. · NeurIPS 2017", meta: "Sample record LV-T03 · Section 5 · confidence 0.94" },
+            { verdict: "Fabricated", kind: "contradicted", claim: "A 2016 paper titled “Quantum Semantic Networks” introduced the Transformer architecture.", evidence: "No such title appears in the bundled bibliography, and the claimed date predates the canonical 2017 Transformer paper. LitVerify marks the citation unusable.", source: "Citation lookup · no matching record", meta: "Sample record LV-T04 · citation integrity check · confidence 0.99" }
+          ]
+        },
+        crispr: {
+          title: "CRISPR-Cas9: mechanism, scope, and limits",
+          summary: "The sample evidence supports programmable RNA-guided DNA cleavage and broad genome-editing utility, while qualifying any claim that targeting is intrinsically error-free.",
+          claims: [
+            { verdict: "Supported", kind: "supported", claim: "Cas9 can be programmed by guide RNA to cleave a complementary DNA target.", evidence: "Biochemical studies established an RNA-guided endonuclease system whose targeting depends on sequence complementarity and an adjacent motif.", source: "Jinek et al. · Science 2012", meta: "Sample record LV-C01 · mechanism evidence · confidence 0.97" },
+            { verdict: "Mixed", kind: "mixed", claim: "CRISPR-Cas9 targeting is always perfectly specific.", evidence: "Specificity can be high under suitable design, but mismatched sequences and cellular context can permit off-target activity; the absolute wording is unsupported.", source: "Hsu et al. · Nature Biotechnology 2013", meta: "Sample record LV-C02 · specificity evidence · confidence 0.91" },
+            { verdict: "Supported", kind: "supported", claim: "The system has been adapted for genome editing in diverse cell types and organisms.", evidence: "The curated reviews document rapid adaptation across experimental systems while emphasizing delivery, repair pathway, and safety constraints.", source: "Doudna & Charpentier · Science 2014", meta: "Sample record LV-C03 · review evidence · confidence 0.93" }
+          ]
+        },
+        agents: {
+          title: "Tool-using language-model agents: an evidence map",
+          summary: "The selected papers support interleaving reasoning with actions and deliberate search over intermediate thoughts. Evaluation practice, however, remains fragmented rather than universal.",
+          claims: [
+            { verdict: "Supported", kind: "supported", claim: "ReAct interleaves reasoning traces with environment-facing actions.", evidence: "The method combines verbal reasoning with task actions so each can inform the other during a trajectory.", source: "Yao et al. · ICLR 2023", meta: "Sample record LV-A01 · method description · confidence 0.96" },
+            { verdict: "Supported", kind: "supported", claim: "Tree of Thoughts explores multiple candidate reasoning paths rather than one fixed chain.", evidence: "The framework treats intermediate thoughts as search states and supports deliberate exploration with evaluation and backtracking.", source: "Yao et al. · NeurIPS 2023", meta: "Sample record LV-A02 · framework evidence · confidence 0.94" },
+            { verdict: "Mixed", kind: "mixed", claim: "There is one universal benchmark that measures every agent capability.", evidence: "Agent studies use varied environments, task suites, success metrics, and safety checks. Cross-paper comparison therefore remains limited.", source: "Curated survey record · 2024", meta: "Sample record LV-A03 · synthesis evidence · confidence 0.86" }
+          ]
+        }
+      };
+      var timers = [];
+      var toastTimer;
+      function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+      function showToast(message) { var toast = document.getElementById("toast"); toast.textContent = message; toast.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200); }
+      function resetSteps() { document.querySelectorAll(".agent-step").forEach(function (step) { step.classList.remove("active", "done"); }); }
+      function setStep(index) { document.querySelectorAll(".agent-step").forEach(function (step, stepIndex) { step.classList.toggle("active", stepIndex === index); step.classList.toggle("done", stepIndex < index); }); }
+      function makeTrace(topic, claimCount) {
+        var names = ["Expanded the question into 4 search intents", "Read and deduplicated 6 evidence fragments", "Scored " + claimCount + " claims against cited passages", "Resolved conflicts and drafted the review"];
+        var root = document.getElementById("trace"); root.textContent = "";
+        names.forEach(function (name, index) { var item = document.createElement("div"); item.className = "trace-item"; var number = document.createElement("span"); number.className = "trace-number"; number.textContent = index + 1; var copy = document.createElement("div"); var title = document.createElement("b"); title.textContent = name; var detail = document.createElement("span"); detail.textContent = index === 0 ? "Topic pack: " + topic : ["Primary-source records preferred", "No unsupported claim promoted", "Citation metadata attached"][index - 1]; copy.appendChild(title); copy.appendChild(detail); item.appendChild(number); item.appendChild(copy); root.appendChild(item); });
+      }
+      function renderReport(pack) {
+        var report = document.getElementById("report"); report.textContent = "";
+        var head = document.createElement("div"); head.className = "report-head"; var badge = document.createElement("span"); badge.className = "badge success"; badge.textContent = "Evidence audit complete"; var title = document.createElement("h2"); title.textContent = pack.title; var summary = document.createElement("p"); summary.textContent = pack.summary; head.appendChild(badge); head.appendChild(title); head.appendChild(summary);
+        var body = document.createElement("div"); body.className = "report-body"; var list = document.createElement("div"); list.className = "claim-list";
+        pack.claims.forEach(function (claim) { var card = document.createElement("article"); card.className = "claim"; var verdict = document.createElement("span"); verdict.className = "verdict " + claim.kind; verdict.textContent = claim.verdict; var copy = document.createElement("div"); var claimTitle = document.createElement("h3"); claimTitle.textContent = claim.claim; var evidence = document.createElement("p"); evidence.textContent = claim.evidence; var source = document.createElement("div"); source.className = "source"; source.textContent = claim.source; var details = document.createElement("details"); var summaryEl = document.createElement("summary"); summaryEl.textContent = "Inspect verification metadata"; var metadata = document.createElement("div"); metadata.textContent = claim.meta + ". Citation links are disabled in this offline preview."; details.appendChild(summaryEl); details.appendChild(metadata); copy.appendChild(claimTitle); copy.appendChild(evidence); copy.appendChild(source); copy.appendChild(details); card.appendChild(verdict); card.appendChild(copy); list.appendChild(card); });
+        body.appendChild(list); report.appendChild(head); report.appendChild(body);
+      }
+      function run() {
+        clearTimers(); resetSteps(); var button = document.getElementById("run"); var status = document.getElementById("runStatus"); var topicKey = document.getElementById("topic").value; var model = document.getElementById("model").value; var topicName = document.getElementById("topic").options[document.getElementById("topic").selectedIndex].text;
+        button.disabled = true; button.innerHTML = '<span class="spinner"></span> Verifying'; document.getElementById("traceBadge").textContent = "Running";
+        var stages = ["Planning evidence queries…", "Reading curated source passages…", "Testing claims for support and contradiction…", "Writing a traceable synthesis…"];
+        stages.forEach(function (label, index) { timers.push(setTimeout(function () { setStep(index); status.textContent = label; }, index * 550)); });
+        timers.push(setTimeout(function () {
+          document.querySelectorAll(".agent-step").forEach(function (step) { step.classList.remove("active"); step.classList.add("done"); });
+          renderReport(packs[topicKey]); makeTrace(topicName, packs[topicKey].claims.length); button.disabled = false; button.textContent = "Run verification"; status.textContent = "Verification complete · " + packs[topicKey].claims.length + " claims mapped to evidence"; document.getElementById("traceBadge").textContent = "Complete";
+          document.getElementById("records").textContent = "6"; document.getElementById("tokens").textContent = model === "large" ? "8,420" : "4,180"; document.getElementById("wallTime").textContent = model === "large" ? "18.6 s" : "8.4 s"; document.getElementById("cost").textContent = model === "large" ? "$0.084" : "$0.019"; showToast("Claim-level evidence audit ready");
+        }, 2250));
+      }
+      function reset() {
+        clearTimers(); document.getElementById("topic").value = "transformer"; document.getElementById("model").value = "small"; document.getElementById("run").disabled = false; document.getElementById("run").textContent = "Run verification"; resetSteps(); document.getElementById("runStatus").textContent = "Ready to inspect 6 curated records."; document.getElementById("traceBadge").textContent = "Idle"; document.getElementById("trace").innerHTML = '<p class="small muted">Agent decisions will appear here after a run.</p>'; document.getElementById("report").innerHTML = '<div class="empty-report"><div><div class="seal">✓</div><b>No report generated yet</b><p>Select a research question and run the four-agent verification flow. Results are deterministic so the demo stays reliable on stage.</p></div></div>'; ["records","tokens","wallTime","cost"].forEach(function (id) { document.getElementById(id).textContent = "—"; }); showToast("Demo reset");
+      }
+      document.getElementById("run").addEventListener("click", run); document.getElementById("reset").addEventListener("click", reset);
+    }());
+  </script>
+</body>
+</html>

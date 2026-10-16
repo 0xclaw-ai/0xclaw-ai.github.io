@@ -13,7 +13,7 @@
   <link rel="icon" href="assets/0xclaw_logo.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <style>
     /* ── Variables ──────────────────────────────── */
@@ -172,7 +172,7 @@
       animation: riseIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
     }
     .hero-visual img {
-      width: clamp(260px, 42vw, 460px);
+      width: clamp(260px, 50vw, 560px);
       height: auto;
       filter:
         drop-shadow(0 0 36px rgba(124, 58, 237, 0.55))
@@ -472,20 +472,23 @@
     /* ── Responsive ─────────────────────────────── */
     @media (max-width: 520px) {
       .nav-link span { display: none; }
+      .hero-visual img { width: min(80vw, 330px); }
       footer { justify-content: center; text-align: center; }
       .footer-links { justify-content: center; }
     }
   </style>
   <link rel="stylesheet" href="project-videos.css" />
+  <link rel="stylesheet" href="hero-water.css" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
   <script src="project-videos.js" defer></script>
+  <script src="hero-water.js" defer></script>
 </head>
 <body>
 
   <!-- Nav -->
   <nav>
-    <a class="nav-brand" href="/">
-      <img src="assets/0xclaw_logo.png" alt="0xClaw logo" />
+    <a class="nav-brand" href="/" draggable="false">
+      <img src="assets/0xclaw_logo.png" alt="0xClaw logo" draggable="false" />
       <span>0xClaw</span>
     </a>
     <div class="nav-actions">
@@ -505,11 +508,13 @@
   </nav>
 
   <!-- Hero -->
-  <section class="hero">
+  <section class="hero water-hero">
+    <canvas class="water-canvas" aria-hidden="true"></canvas>
     <div class="hero-glow" aria-hidden="true"></div>
 
     <div class="hero-visual">
-      <img src="assets/0xClaw_combine.png" alt="0xClaw — The First Autonomous Hackathon Agent" />
+      <img src="assets/0xClaw_combine.png" alt="0xClaw — The First Autonomous Hackathon Agent" draggable="false" />
+      <canvas class="logo-magnet-canvas" aria-hidden="true"></canvas>
     </div>
 
     <p class="hero-tag">The First Hackathon Agent in the World</p>
@@ -541,59 +546,147 @@
     <div class="scroll-cue" aria-hidden="true"><span>scroll</span></div>
   </section>
 
-  <section class="story" id="story">
-  <p class="section-label">👾 Demo Video</p>
-  <div align="center">
-    <iframe width="800" height="500" src="https://www.youtube.com/embed/jmamrAxRuec?si=wviMiHu44KoMHYcb" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-  </div>
+  <section class="process-story" aria-labelledby="process-story-title">
+    <div class="process-story__intro">
+      <p class="section-label">From brief to build</p>
+      <h2 id="process-story-title">One URL. A working project.</h2>
+      <p>0xClaw follows the hackathon brief all the way through to a finished demo.</p>
+    </div>
+    <div class="process-story__flow">
+      <div class="process-story__track" aria-hidden="true"><span></span></div>
+      <article class="process-step">
+        <div class="process-step__visual process-step__visual--brief" aria-hidden="true">
+          <div class="brief-sheet">
+            <div class="brief-sheet__bar"><i></i><i></i><i></i><span>HACKATHON BRIEF</span></div>
+            <div class="brief-sheet__url">INPUT · HACKATHON URL</div>
+            <div class="brief-sheet__title"></div>
+            <div class="brief-sheet__line brief-sheet__line--long"></div>
+            <div class="brief-sheet__line"></div>
+            <div class="brief-sheet__tags"><span>Rules</span><span>Criteria</span><span>Deadline</span></div>
+          </div>
+        </div>
+        <div class="process-step__copy"><span class="process-step__number">01 / INPUT</span><h3>Read the challenge</h3><p>Extract the rules, requirements and judging criteria.</p></div>
+      </article>
+      <article class="process-step">
+        <div class="process-step__visual process-step__visual--build" aria-hidden="true">
+          <div class="build-window">
+            <div class="build-window__top"><span class="build-window__spark">✳</span> 0xClaw <span class="build-window__live">● LIVE</span></div>
+            <div class="build-window__row"><span>01</span><i></i><b>research</b><em>done</em></div>
+            <div class="build-window__row"><span>02</span><i></i><b>plan</b><em>done</em></div>
+            <div class="build-window__row"><span>03</span><i></i><b>code + test</b><em>running</em></div>
+            <div class="build-window__trace"></div>
+          </div>
+        </div>
+        <div class="process-step__copy"><span class="process-step__number">02 / AUTONOMY</span><h3>Build and test</h3><p>Research, plan, code and iterate without handoffs.</p></div>
+      </article>
+      <article class="process-step">
+        <div class="process-step__visual process-step__visual--output" aria-hidden="true">
+          <div class="output-stack">
+            <img src="assets/project-videos/navigator.jpg" alt="" loading="lazy" />
+            <img src="assets/project-videos/mememind.jpg" alt="" loading="lazy" />
+          </div>
+          <span class="output-stack__badge">WORKING DEMO ✓</span>
+        </div>
+        <div class="process-step__copy"><span class="process-step__number">03 / OUTPUT</span><h3>Ship the result</h3><p>A real project, ready to present and explore.</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="story demo-story" id="story">
+    <p class="section-label">Demo Video</p>
+    <div class="demo-stage">
+      <div class="demo-stage__frame">
+        <video id="intro-video" playsinline preload="metadata" poster="assets/newintro-poster.jpg" aria-label="0xClaw overview and live project showcases">
+          <source src="assets/newintro.mp4" type="video/mp4" />
+          <a href="assets/newintro.mp4">Watch the 0xClaw demo video</a>
+        </video>
+        <div class="demo-controls" role="group" aria-label="Demo video controls">
+          <button class="demo-control demo-toggle" type="button" aria-label="Play video" aria-controls="intro-video">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+          </button>
+          <span class="demo-time demo-current">0:00</span>
+          <input class="demo-seek" type="range" min="0" max="1000" value="0" step="1" disabled aria-label="Seek in demo video" />
+          <span class="demo-time demo-duration">0:00</span>
+          <button class="demo-control demo-mute" type="button" aria-label="Mute video" aria-controls="intro-video">
+            <svg class="icon-volume" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 14.5 12zm-2.5-8.83v2.06a7 7 0 0 1 0 13.54v2.06a9 9 0 0 0 0-17.66z"/></svg>
+            <svg class="icon-muted" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>
+          </button>
+          <button class="demo-control demo-fullscreen" type="button" aria-label="Fullscreen video" aria-controls="intro-video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5M4 15v5h5m6 0h5v-5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 
   
   <!-- Project videos: additive showcase; original page content unchanged. -->
   <section id="project-videos" aria-labelledby="project-videos-title">
-    <h2 id="project-videos-title" class="section-label">Project videos</h2>
+    <h2 id="project-videos-title" class="section-label">Showcases</h2>
     <div class="project-video-grid">
       <figure class="project-video-card">
-        <video controls playsinline preload="none" poster="assets/project-videos/clarify.jpg" aria-label="Clarify demo video">
+        <video controls playsinline preload="none" poster="assets/project-videos/clarify-cover.jpg?v=3" aria-label="Clarify demo video">
           <source src="assets/project-videos/clarify.mp4" type="video/mp4" />
           <a href="assets/project-videos/clarify.mp4">Watch Clarify</a>
         </video>
-        <figcaption><span class="project-video-title">Clarify</span><a class="project-video-event" href="https://caretech-hackathon-2026.devpost.com/" target="_blank" rel="noopener noreferrer" aria-label="Clarify: CareTech 2026 (opens in a new tab)">CareTech 2026 <span aria-hidden="true">↗</span></a></figcaption>
+        <figcaption><span class="project-video-title">Clarify</span></figcaption>
       </figure>
       <figure class="project-video-card">
         <video controls playsinline preload="none" poster="assets/project-videos/navigator.jpg" aria-label="Navigator demo video">
           <source src="assets/project-videos/navigator.mp4" type="video/mp4" />
           <a href="assets/project-videos/navigator.mp4">Watch Navigator</a>
         </video>
-        <figcaption><span class="project-video-title">Navigator</span><a class="project-video-event" href="https://dorahacks.io/hackathon/2097/detail" target="_blank" rel="noopener noreferrer" aria-label="Navigator: Actian VectorAI (opens in a new tab)">Actian VectorAI <span aria-hidden="true">↗</span></a></figcaption>
+        <figcaption><span class="project-video-title">Navigator</span></figcaption>
       </figure>
       <figure class="project-video-card">
-        <video controls playsinline preload="none" poster="assets/project-videos/litverify.jpg" aria-label="LitVerify demo video">
+        <video controls playsinline preload="none" poster="assets/project-videos/litverify-cover.jpg?v=3" aria-label="LitVerify demo video">
           <source src="assets/project-videos/litverify.mp4" type="video/mp4" />
           <a href="assets/project-videos/litverify.mp4">Watch LitVerify</a>
         </video>
-        <figcaption><span class="project-video-title">LitVerify</span><a class="project-video-event" href="https://dorahacks.io/hackathon/iitm-research-agents/detail" target="_blank" rel="noopener noreferrer" aria-label="LitVerify: Research Agents Hack (opens in a new tab)">Research Agents Hack <span aria-hidden="true">↗</span></a></figcaption>
+        <figcaption><span class="project-video-title">LitVerify</span></figcaption>
       </figure>
       <figure class="project-video-card">
-        <video controls playsinline preload="none" poster="assets/project-videos/steward.jpg" aria-label="Steward demo video">
+        <video controls playsinline preload="none" poster="assets/project-videos/steward-cover.jpg?v=3" aria-label="Steward demo video">
           <source src="assets/project-videos/steward.mp4" type="video/mp4" />
           <a href="assets/project-videos/steward.mp4">Watch Steward</a>
         </video>
-        <figcaption><span class="project-video-title">Steward</span><a class="project-video-event" href="https://dorahacks.io/hackathon/hackonvibe/detail" target="_blank" rel="noopener noreferrer" aria-label="Steward: HackOnVibe (opens in a new tab)">HackOnVibe <span aria-hidden="true">↗</span></a></figcaption>
+        <figcaption><span class="project-video-title">Steward</span></figcaption>
       </figure>
       <figure class="project-video-card">
-        <video controls playsinline preload="none" poster="assets/project-videos/token.jpg" aria-label="Token Launch Intelligence demo video">
+        <video controls playsinline preload="none" poster="assets/project-videos/token-cover.jpg" aria-label="Token Launch Intelligence demo video">
           <source src="assets/project-videos/token.mp4" type="video/mp4" />
           <a href="assets/project-videos/token.mp4">Watch Token Launch Intelligence</a>
         </video>
-        <figcaption><span class="project-video-title">Token Launch Intelligence</span><a class="project-video-event" href="https://dorahacks.io/hackathon/the-bags-hackathon/detail" target="_blank" rel="noopener noreferrer" aria-label="Token Launch Intelligence: The Bags Hackathon (opens in a new tab)">The Bags Hackathon <span aria-hidden="true">↗</span></a></figcaption>
+        <figcaption><span class="project-video-title">Token Launch Intelligence</span></figcaption>
       </figure>
       <figure class="project-video-card">
         <video controls playsinline preload="none" poster="assets/project-videos/mememind.jpg" aria-label="MemeMind demo video">
           <source src="assets/project-videos/mememind.mp4" type="video/mp4" />
           <a href="assets/project-videos/mememind.mp4">Watch MemeMind</a>
         </video>
-        <figcaption><span class="project-video-title">MemeMind</span><a class="project-video-event" href="https://dorahacks.io/hackathon/fourmemeaisprint/detail" target="_blank" rel="noopener noreferrer" aria-label="MemeMind: Four.Meme AI Sprint (opens in a new tab)">Four.Meme AI Sprint <span aria-hidden="true">↗</span></a></figcaption>
+        <figcaption><span class="project-video-title">MemeMind</span></figcaption>
+      </figure>
+      <figure class="project-video-card">
+        <video controls playsinline preload="none" poster="assets/project-videos/opspilot.jpg?v=3" aria-label="OpsPilot demo video">
+          <source src="assets/project-videos/opspilot.mp4?v=2" type="video/mp4" />
+          <a href="assets/project-videos/opspilot.mp4?v=2">Watch OpsPilot</a>
+        </video>
+        <figcaption><span class="project-video-title">OpsPilot</span></figcaption>
+      </figure>
+      <figure class="project-video-card">
+        <video controls playsinline preload="none" poster="assets/project-videos/aws-cost.jpg?v=3" aria-label="AWS Cost Intelligence demo video">
+          <source src="assets/project-videos/aws-cost.mp4?v=2" type="video/mp4" />
+          <a href="assets/project-videos/aws-cost.mp4?v=2">Watch AWS Cost Intelligence</a>
+        </video>
+        <figcaption><span class="project-video-title">AWS Cost Intelligence</span></figcaption>
+      </figure>
+      <figure class="project-video-card">
+        <video controls playsinline preload="none" poster="assets/project-videos/aigent.jpg?v=3" aria-label="AIGent Protocol demo video">
+          <source src="assets/project-videos/aigent.mp4?v=2" type="video/mp4" />
+          <a href="assets/project-videos/aigent.mp4?v=2">Watch AIGent Protocol</a>
+        </video>
+        <figcaption><span class="project-video-title">AIGent Protocol</span></figcaption>
       </figure>
     </div>
   </section>

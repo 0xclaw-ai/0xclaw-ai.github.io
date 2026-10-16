@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Token Launch Intelligence — Interactive Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png" />
+  <link rel="stylesheet" href="../shared.css" />
+  <style>
+    :root { --accent: #0ea5e9; --accent-2: #7dd3fc; --bg: #07111a; --surface: #0e1b26; --surface-2: #112433; }
+    .top-tabs { max-width: 560px; margin-bottom: 1.2rem; }
+    .wizard { max-width: 760px; margin: 0 auto; }
+    .steps { display: flex; align-items: center; margin-bottom: 1.4rem; }
+    .step-dot { width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); background: var(--surface); font: 700 .66rem ui-monospace, monospace; }
+    .step-dot.active { color: white; border-color: var(--accent); background: var(--accent); }
+    .step-dot.done { color: #071a12; border-color: var(--success); background: var(--success); }
+    .step-line { height: 1px; flex: 1; background: var(--line); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+    .wide { grid-column: 1 / -1; }
+    .score-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .65rem; }
+    .score { padding: .9rem .4rem; border: 1px solid var(--line); border-radius: 10px; text-align: center; background: rgba(255,255,255,.025); }
+    .score-ring { --score: 70; width: 62px; height: 62px; display: grid; place-items: center; margin: 0 auto; border-radius: 50%; background: radial-gradient(circle closest-side, var(--surface) 76%, transparent 78%), conic-gradient(var(--accent) calc(var(--score) * 1%), rgba(255,255,255,.08) 0); }
+    .score-ring strong { font: 800 .9rem ui-monospace, monospace; }
+    .score p { margin-top: .45rem; color: var(--muted); font-size: .6rem; }
+    .recommendation { margin-top: .8rem; padding: .8rem; border: 1px solid rgba(67,209,158,.2); border-radius: 8px; color: #b9edd9; background: rgba(67,209,158,.06); font-size: .72rem; line-height: 1.55; }
+    .suggestions { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; margin-top: .8rem; }
+    .suggestion { display: flex; justify-content: space-between; gap: .5rem; padding: .65rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .67rem; }
+    .suggestion b { color: var(--text); }
+    .rec-list { display: grid; gap: .42rem; margin-top: .8rem; list-style: none; }
+    .rec-list li { color: var(--muted); font-size: .68rem; line-height: 1.45; }
+    .rec-list li::before { content: "→"; margin-right: .45rem; color: var(--accent-2); }
+    .launch-summary { display: grid; gap: .55rem; }
+    .summary-row { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .55rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .7rem; }
+    .summary-row strong { color: var(--text); }
+    .safe-box { margin-top: 1rem; padding: .75rem; border: 1px solid rgba(246,189,82,.22); border-radius: 8px; color: #e2c98d; background: rgba(246,189,82,.06); font-size: .67rem; line-height: 1.5; }
+    .launch-pipeline { display: grid; gap: .55rem; margin-top: 1rem; }
+    .launch-stage { display: flex; align-items: center; gap: .7rem; padding: .7rem; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: .68rem; }
+    .launch-stage i { width: 8px; height: 8px; border-radius: 50%; background: var(--dim, #4b5563); }
+    .launch-stage.running { color: var(--text); border-color: rgba(14,165,233,.3); }
+    .launch-stage.running i { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .launch-stage.done { color: #b9edd9; }
+    .launch-stage.done i { background: var(--success); }
+    .market-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .7rem; }
+    .chart-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: .8rem; margin-top: .8rem; }
+    .bar-chart { height: 220px; display: flex; align-items: end; justify-content: space-around; gap: .6rem; padding: 1.2rem 1rem .8rem; }
+    .bar { width: 18%; height: var(--h); border-radius: 5px 5px 2px 2px; background: linear-gradient(var(--accent-2), var(--accent)); position: relative; }
+    .bar span { position: absolute; bottom: -1.3rem; left: 50%; transform: translateX(-50%); color: var(--muted); font-size: .56rem; }
+    .donut { width: 150px; height: 150px; margin: 1.4rem auto; border-radius: 50%; background: radial-gradient(circle closest-side, var(--surface) 62%, transparent 64%), conic-gradient(#f59e0b 0 49%, #6366f1 49% 78%, #0ea5e9 78%); }
+    .monitor-list { display: grid; gap: .7rem; }
+    .project-row { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+    .project-head { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: .85rem; border: 0; background: rgba(255,255,255,.025); cursor: pointer; text-align: left; }
+    .project-head strong { font-size: .75rem; }
+    .project-detail { padding: .8rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .66rem; line-height: 1.6; }
+    @media (max-width: 700px) { .form-grid, .score-grid, .market-grid, .chart-grid { grid-template-columns: 1fr 1fr; } .score-grid { gap: .45rem; } .chart-grid > * { grid-column: 1 / -1; } }
+    @media (max-width: 440px) { .form-grid, .market-grid { grid-template-columns: 1fr; } .wide { grid-column: auto; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">↗</span> Token Launch Intelligence</div>
+    <div class="demo-mode">Deterministic market · simulated launch</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <div class="tabs top-tabs">
+      <button class="tab active" data-view="builder">Launch builder</button>
+      <button class="tab" data-view="market">Market intelligence</button>
+      <button class="tab" data-view="monitor">Launch monitor</button>
+    </div>
+
+    <section id="builder-view">
+      <div class="hero-copy">
+        <p class="kicker">Input-driven launch analysis</p>
+        <h1>Plan a token launch<br />without launching a token.</h1>
+        <p>Every score responds to the parameters you enter. The final transaction is explicitly simulated and cannot touch a wallet.</p>
+      </div>
+
+      <div class="wizard">
+        <div class="steps" aria-label="Launch progress">
+          <span class="step-dot active" data-dot="1">1</span><i class="step-line"></i>
+          <span class="step-dot" data-dot="2">2</span><i class="step-line"></i>
+          <span class="step-dot" data-dot="3">3</span><i class="step-line"></i>
+          <span class="step-dot" data-dot="4">4</span>
+        </div>
+
+        <section class="panel panel-pad" data-step="1">
+          <div class="panel-title"><h2>Create your project</h2><span class="badge">Step 1</span></div>
+          <form id="project-form" class="form-grid">
+            <div class="field wide"><label for="project-name">Project name</label><input class="input" id="project-name" required value="ClawPay" /></div>
+            <div class="field wide"><label for="description">Description</label><textarea id="description" required>A DeFi utility token for automated payments, governance rewards, and protocol staking.</textarea></div>
+            <div class="field wide"><label for="wallet">Creator wallet <span class="muted">(display only)</span></label><input class="input" id="wallet" value="demo-wallet-8Fx2" /></div>
+            <button class="btn wide" type="submit">Continue to token parameters →</button>
+          </form>
+        </section>
+
+        <section class="panel panel-pad hidden" data-step="2">
+          <div class="panel-title"><h2>Token parameters</h2><span class="badge">Step 2</span></div>
+          <form id="token-form" class="form-grid">
+            <div class="field"><label for="token-name">Token name</label><input class="input" id="token-name" required value="ClawPay Token" /></div>
+            <div class="field"><label for="symbol">Symbol</label><input class="input" id="symbol" required maxlength="10" value="CLAW" /></div>
+            <div class="field"><label for="supply">Total supply</label><input class="input" id="supply" type="number" min="1" required value="10000000" /></div>
+            <div class="field"><label for="liquidity">Initial liquidity · SOL</label><input class="input" id="liquidity" type="number" min="0" step=".1" value="12" /></div>
+            <div class="field wide"><label for="fee">Fee share · %</label><input class="input" id="fee" type="number" min="0" max="10" step=".1" value="2" /></div>
+            <div class="btn-row wide">
+              <button class="btn secondary" type="button" data-back="1">← Back</button>
+              <button class="btn" type="submit">Calculate launch analysis →</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel panel-pad hidden" data-step="3">
+          <div class="panel-title"><h2>Launch analysis</h2><span class="badge success">Calculated locally</span></div>
+          <div class="score-grid" id="scores"></div>
+          <div class="recommendation" id="recommendation"></div>
+          <div class="suggestions" id="suggestions"></div>
+          <ul class="rec-list" id="recommendations"></ul>
+          <div class="btn-row">
+            <button class="btn secondary" type="button" data-back="2">← Adjust parameters</button>
+            <button class="btn" type="button" id="to-summary">Review simulation →</button>
+          </div>
+        </section>
+
+        <section class="panel panel-pad hidden" data-step="4">
+          <div class="panel-title"><h2>Launch simulation</h2><span class="badge warning">No real transaction</span></div>
+          <div class="launch-summary" id="launch-summary"></div>
+          <div class="safe-box">This preview generates a local demo transaction ID. It does not connect to Bags, Solana, a wallet, or any external API.</div>
+          <div class="launch-pipeline hidden" id="pipeline">
+            <div class="launch-stage" data-stage="0"><i></i>Validate parameters</div>
+            <div class="launch-stage" data-stage="1"><i></i>Create demo transaction</div>
+            <div class="launch-stage" data-stage="2"><i></i>Confirm simulated launch</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn secondary" type="button" data-back="3">← Back</button>
+            <button class="btn" type="button" id="simulate">Run simulated launch</button>
+          </div>
+          <div class="recommendation hidden" id="launch-result"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="hidden" id="market-view">
+      <div class="hero-copy"><p class="kicker">Sample market snapshot</p><h1>Market intelligence.</h1><p>Refresh cycles through three deterministic conditions so the dashboard is testable without CoinGecko.</p></div>
+      <div class="panel panel-pad">
+        <div class="panel-title"><h2>Current conditions</h2><button class="btn ghost" id="refresh-market">Refresh snapshot</button></div>
+        <div class="market-grid" id="market-metrics"></div>
+        <div class="chart-grid">
+          <div class="panel"><div class="panel-pad"><h2 class="small">Market score profile</h2><div class="bar-chart" id="bars"></div></div></div>
+          <div class="panel"><div class="panel-pad"><h2 class="small">Market dominance</h2><div class="donut"></div><p class="muted small" style="text-align:center">BTC 49% · ETH 29% · SOL ecosystem 22%</p></div></div>
+        </div>
+        <div class="recommendation" id="timing"></div>
+      </div>
+    </section>
+
+    <section class="hidden" id="monitor-view">
+      <div class="hero-copy"><p class="kicker">Local launch history</p><h1>Launch monitor.</h1><p>Completed simulations appear here and persist until this demo is reset.</p></div>
+      <div class="panel panel-pad">
+        <div class="panel-title"><h2>Projects</h2><span class="badge">Local session</span></div>
+        <div class="monitor-list" id="monitor-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var state = { step: 1, score: null, launched: false, marketIndex: 0 };
+      var snapshots = [
+        { cap: "$2.41T", sol: "$184.20", change: "+3.2%", phase: "Bull", sentiment: 74, timing: 82, volume: 68, health: 77 },
+        { cap: "$2.32T", sol: "$176.80", change: "-1.1%", phase: "Neutral", sentiment: 55, timing: 61, volume: 58, health: 64 },
+        { cap: "$2.18T", sol: "$168.40", change: "-4.3%", phase: "Bear", sentiment: 34, timing: 38, volume: 72, health: 42 }
+      ];
+
+      function clamp(value) { return Math.max(0, Math.min(100, Math.round(value))); }
+      function value(id) { return document.getElementById(id).value.trim(); }
+      function number(id) { return Number(document.getElementById(id).value) || 0; }
+      function html(input) { return String(input).replace(/[&<>"']/g, function (character) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]; }); }
+      function tokenSlug() { return value("symbol").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "token"; }
+      function showToast(message) {
+        var toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(function () { toast.classList.remove("show"); }, 1800);
+      }
+      function goStep(step) {
+        state.step = step;
+        document.querySelectorAll("[data-step]").forEach(function (section) {
+          section.classList.toggle("hidden", Number(section.dataset.step) !== step);
+        });
+        document.querySelectorAll("[data-dot]").forEach(function (dot) {
+          var n = Number(dot.dataset.dot);
+          dot.classList.toggle("active", n === step);
+          dot.classList.toggle("done", n < step);
+          dot.textContent = n < step ? "✓" : String(n);
+        });
+      }
+      function computeScore() {
+        var supply = number("supply");
+        var liquidity = number("liquidity");
+        var fee = number("fee");
+        var symbol = value("symbol");
+        var description = value("description").toLowerCase();
+        var utility = ["utility", "governance", "stake", "payment", "reward"].filter(function (word) { return description.indexOf(word) > -1; }).length;
+        var tokenomics = 55 + (supply >= 1000000 && supply <= 1000000000 ? 18 : -6) + (symbol.length >= 2 && symbol.length <= 6 ? 9 : -5) + utility * 3;
+        var risk = 42 + Math.min(liquidity * 2.4, 28) + (fee <= 3 ? 10 : fee <= 6 ? 2 : -10) + Math.min(utility * 2, 8);
+        var timing = snapshots[state.marketIndex].timing;
+        var overall = tokenomics * .35 + risk * .4 + timing * .25;
+        state.score = { overall: clamp(overall), tokenomics: clamp(tokenomics), risk: clamp(risk), timing: clamp(timing) };
+        renderAnalysis();
+      }
+      function renderAnalysis() {
+        var items = [["Overall", state.score.overall], ["Tokenomics", state.score.tokenomics], ["Risk safety", state.score.risk], ["Timing", state.score.timing]];
+        document.getElementById("scores").innerHTML = items.map(function (item) {
+          return '<div class="score"><div class="score-ring" style="--score:' + item[1] + '"><strong>' + item[1] + '</strong></div><p>' + item[0] + '</p></div>';
+        }).join("");
+        var quality = state.score.overall >= 75 ? "Strong launch profile" : state.score.overall >= 55 ? "Conditional launch profile" : "Delay and improve the plan";
+        document.getElementById("recommendation").innerHTML = '<strong>' + quality + '.</strong> The score reflects your supply, liquidity, fee, utility description, and the selected market snapshot.';
+        document.getElementById("suggestions").innerHTML =
+          '<div class="suggestion"><span>Suggested supply</span><b>' + number("supply").toLocaleString() + '</b></div>' +
+          '<div class="suggestion"><span>Minimum liquidity</span><b>' + Math.max(5, Math.ceil((100 - state.score.risk) / 6)) + ' SOL</b></div>' +
+          '<div class="suggestion"><span>Fee share</span><b>' + (state.score.overall >= 70 ? "1.0" : "2.0") + '%</b></div>' +
+          '<div class="suggestion"><span>Vesting</span><b>' + (state.score.risk >= 65 ? "3" : "6") + ' months</b></div>';
+        var recs = [];
+        if (number("liquidity") < 10) recs.push("Increase initial liquidity to reduce slippage risk.");
+        if (number("fee") > 3) recs.push("Lower fee share to improve early adoption.");
+        if (value("description").length < 60) recs.push("Add a clearer utility and target-user description.");
+        if (state.score.timing < 55) recs.push("Wait for a healthier market timing window.");
+        if (!recs.length) recs.push("Parameters are internally consistent for a controlled test launch.", "Publish vesting terms before launch.", "Run an independent contract audit.");
+        document.getElementById("recommendations").innerHTML = recs.map(function (rec) { return "<li>" + rec + "</li>"; }).join("");
+      }
+      function renderSummary() {
+        document.getElementById("launch-summary").innerHTML =
+          '<div class="summary-row"><span>Project</span><strong>' + html(value("project-name")) + '</strong></div>' +
+          '<div class="summary-row"><span>Token</span><strong>' + html(value("token-name")) + ' (' + html(value("symbol").toUpperCase()) + ')</strong></div>' +
+          '<div class="summary-row"><span>Total supply</span><strong>' + number("supply").toLocaleString() + '</strong></div>' +
+          '<div class="summary-row"><span>Initial liquidity</span><strong>' + number("liquidity") + ' SOL</strong></div>' +
+          '<div class="summary-row"><span>AI score</span><strong>' + state.score.overall + '/100</strong></div>';
+      }
+      function switchView(view) {
+        ["builder", "market", "monitor"].forEach(function (name) {
+          document.getElementById(name + "-view").classList.toggle("hidden", name !== view);
+        });
+        document.querySelectorAll("[data-view]").forEach(function (tab) { tab.classList.toggle("active", tab.dataset.view === view); });
+        if (view === "market") renderMarket();
+        if (view === "monitor") renderMonitor();
+      }
+      function renderMarket() {
+        var data = snapshots[state.marketIndex];
+        var metrics = [["Market cap", data.cap], ["SOL price", data.sol], ["24h change", data.change], ["Market phase", data.phase]];
+        document.getElementById("market-metrics").innerHTML = metrics.map(function (item) { return '<div class="metric"><span>' + item[0] + '</span><strong>' + item[1] + '</strong></div>'; }).join("");
+        var bars = [["Sentiment", data.sentiment], ["Volume", data.volume], ["SOL health", data.health], ["Timing", data.timing]];
+        document.getElementById("bars").innerHTML = bars.map(function (item) { return '<div class="bar" style="--h:' + item[1] + '%"><span>' + item[0] + '</span></div>'; }).join("");
+        document.getElementById("timing").innerHTML = '<strong>Timing score: ' + data.timing + '/100.</strong> ' + (data.timing > 70 ? "Momentum supports a controlled launch window." : data.timing > 50 ? "Conditions are mixed; validate demand before committing." : "Conditions are unfavorable; use the time to improve liquidity and messaging.");
+      }
+      function renderMonitor() {
+        var entries = [{ name: "Orbit Labs", symbol: "ORBIT", status: "completed", score: 78, tx: "demo_tx_7c91a2" }];
+        if (state.launched) entries.unshift({ name: value("project-name"), symbol: value("symbol").toUpperCase(), status: "simulated", score: state.score.overall, tx: "demo_tx_" + tokenSlug() + "42" });
+        document.getElementById("monitor-list").innerHTML = entries.map(function (entry, index) {
+          return '<article class="project-row"><button class="project-head" data-expand="' + index + '"><span><strong>' + html(entry.name) + '</strong> <span class="badge success">' + html(entry.status) + '</span></span><span class="muted">⌄</span></button><div class="project-detail hidden" data-detail="' + index + '">Token: ' + html(entry.symbol) + ' · AI score: ' + entry.score + '/100<br />Demo transaction: ' + html(entry.tx) + '<br />No blockchain transaction was created.</div></article>';
+        }).join("");
+        document.querySelectorAll("[data-expand]").forEach(function (button) {
+          button.addEventListener("click", function () { document.querySelector("[data-detail='" + button.dataset.expand + "']").classList.toggle("hidden"); });
+        });
+      }
+
+      document.querySelectorAll("[data-view]").forEach(function (tab) { tab.addEventListener("click", function () { switchView(tab.dataset.view); }); });
+      document.getElementById("project-form").addEventListener("submit", function (event) { event.preventDefault(); goStep(2); });
+      document.getElementById("token-form").addEventListener("submit", function (event) { event.preventDefault(); computeScore(); goStep(3); });
+      document.querySelectorAll("[data-back]").forEach(function (button) { button.addEventListener("click", function () { goStep(Number(button.dataset.back)); }); });
+      document.getElementById("to-summary").addEventListener("click", function () { renderSummary(); goStep(4); });
+      document.getElementById("simulate").addEventListener("click", function () {
+        var button = this;
+        var pipeline = document.getElementById("pipeline");
+        var result = document.getElementById("launch-result");
+        button.disabled = true;
+        pipeline.classList.remove("hidden");
+        result.classList.add("hidden");
+        var stages = Array.from(document.querySelectorAll(".launch-stage"));
+        var index = 0;
+        function next() {
+          if (index > 0) { stages[index - 1].classList.remove("running"); stages[index - 1].classList.add("done"); }
+          if (index < stages.length) {
+            stages[index].classList.add("running");
+            index += 1;
+            window.setTimeout(next, 650);
+          } else {
+            state.launched = true;
+            button.disabled = false;
+            result.innerHTML = '<strong>Simulation complete.</strong> Demo transaction <code>demo_tx_' + tokenSlug() + '42</code> was added to the local launch monitor.';
+            result.classList.remove("hidden");
+            showToast("Simulated launch completed safely.");
+          }
+        }
+        next();
+      });
+      document.getElementById("refresh-market").addEventListener("click", function () { state.marketIndex = (state.marketIndex + 1) % snapshots.length; renderMarket(); showToast("Loaded the next deterministic snapshot."); });
+      document.getElementById("reset").addEventListener("click", function () { window.location.reload(); });
+
+      goStep(1);
+      renderMarket();
+    }());
+  </script>
+</body>
+</html>

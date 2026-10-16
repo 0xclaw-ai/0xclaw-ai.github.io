@@ -15,3 +15,5 @@
 # Logs & misc
 *.log
 .env
+.vercel
+.env*

@@ -11,6 +11,16 @@
   });
   section.addEventListener('pointerdown', () => { keyboard = false; });
   section.querySelectorAll('video').forEach(video => {
+    const media = document.createElement('div');
+    media.className = 'project-video-media';
+    video.parentNode.insertBefore(media, video);
+    media.appendChild(video);
+    const playButton = document.createElement('button');
+    playButton.type = 'button';
+    playButton.className = 'project-video-play';
+    playButton.setAttribute('aria-label', `Play ${video.getAttribute('aria-label') || 'project video'}`);
+    playButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.7v14.6a1 1 0 0 0 1.54.84l11.1-7.3a1 1 0 0 0 0-1.68L8.54 3.86A1 1 0 0 0 7 4.7Z"/></svg>';
+    media.appendChild(playButton);
     video.tabIndex = 0;
     let hovering = false;
     const update = () => {
@@ -18,8 +28,19 @@
         (keyboard && document.activeElement === video) ||
         document.fullscreenElement === video || !!video.webkitDisplayingFullscreen;
     };
-    video.addEventListener('pointerenter', () => { hovering = true; update(); });
-    video.addEventListener('pointerleave', () => { hovering = false; update(); });
+    media.addEventListener('pointerenter', () => { hovering = true; update(); });
+    media.addEventListener('pointerleave', () => { hovering = false; update(); });
+    playButton.addEventListener('click', () => {
+      video.play().catch(() => { video.controls = true; });
+    });
+    const syncPlayback = () => {
+      const playing = !video.paused && !video.ended;
+      media.classList.toggle('is-playing', playing);
+      playButton.tabIndex = playing ? -1 : 0;
+    };
+    video.addEventListener('play', syncPlayback);
+    video.addEventListener('pause', syncPlayback);
+    video.addEventListener('ended', syncPlayback);
     video.addEventListener('focus', update);
     video.addEventListener('blur', update);
     video.addEventListener('keydown', event => {
