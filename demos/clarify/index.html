@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clarify — Interactive Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png" />
+  <link rel="stylesheet" href="../shared.css" />
+  <style>
+    :root { --accent: #6d5dfc; --accent-2: #39e2bd; --bg: #090a12; --surface: #11121c; --surface-2: #0d0e16; }
+    .clarify-title em { color: var(--accent-2); font-style: normal; }
+    .sample-note { margin-top: .55rem; color: var(--muted); font-size: .64rem; }
+    .document-box { min-height: 220px; }
+    .option-list { display: grid; gap: .8rem; }
+    .privacy { padding: .7rem; border: 1px solid rgba(57,226,189,.16); border-radius: 8px; color: #a2cfc5; background: rgba(57,226,189,.05); font-size: .65rem; line-height: 1.5; }
+    .results { display: grid; gap: 1rem; margin-top: 1rem; }
+    .summary { color: #dcdde6; font-size: .82rem; line-height: 1.7; }
+    .term-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: .65rem; margin-top: .8rem; }
+    .term { padding: .75rem; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.025); }
+    .term strong { display: block; color: var(--accent-2); font-size: .7rem; }
+    .term p { margin-top: .3rem; color: var(--muted); font-size: .65rem; line-height: 1.45; }
+    .warning-list { display: grid; gap: .45rem; margin-top: .75rem; }
+    .warning-item { padding: .65rem .75rem; border-left: 2px solid var(--warning); border-radius: 0 6px 6px 0; color: #d9c9a4; background: rgba(246,189,82,.06); font-size: .68rem; line-height: 1.45; }
+    .plan-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .65rem; }
+    .plan-card { padding: .85rem; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.025); }
+    .plan-card h3 { color: var(--accent-2); font-size: .72rem; }
+    .plan-card p { margin-top: .35rem; color: var(--muted); font-size: .65rem; line-height: 1.5; }
+    .timeline { display: grid; gap: .6rem; margin-top: .8rem; }
+    .timeline-row { display: grid; grid-template-columns: 80px 1fr; gap: .7rem; align-items: start; }
+    .timeline-row span { color: var(--accent-2); font: 600 .62rem ui-monospace, monospace; }
+    .timeline-row p { padding-bottom: .6rem; border-bottom: 1px solid var(--line); color: #d7d8e1; font-size: .69rem; }
+    .pharmacy-controls { display: flex; gap: .5rem; }
+    .pharmacy-controls .input { flex: 1; }
+    .pharmacy-list { display: grid; gap: .55rem; margin-top: .8rem; }
+    .pharmacy { display: grid; grid-template-columns: 1fr auto; gap: .5rem; padding: .72rem; border: 1px solid var(--line); border-radius: 8px; }
+    .pharmacy strong { display: block; font-size: .7rem; }
+    .pharmacy p { margin-top: .22rem; color: var(--muted); font-size: .62rem; }
+    .pharmacy span { color: var(--accent-2); font: 600 .62rem ui-monospace, monospace; }
+    @media (max-width: 700px) { .term-grid, .plan-grid { grid-template-columns: 1fr; } .timeline-row { grid-template-columns: 65px 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">✦</span> Clarify</div>
+    <div class="demo-mode">Local sample data · no upload</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <section class="hero-copy">
+      <p class="kicker">AI medical document decoder · safe preview</p>
+      <h1 class="clarify-title">Your medical documents,<br />finally in <em>your language.</em></h1>
+      <p>Choose a sample or edit the text. This preview runs entirely in your browser and never sends medical information anywhere.</p>
+    </section>
+
+    <section class="grid-2">
+      <div class="panel panel-pad">
+        <div class="panel-title">
+          <h2>Document text</h2>
+          <span class="badge">Editable sample</span>
+        </div>
+        <div class="chip-row">
+          <button class="chip active" data-sample="discharge">Discharge summary</button>
+          <button class="chip" data-sample="lab">Lab results</button>
+          <button class="chip" data-sample="eob">Insurance EOB</button>
+        </div>
+        <textarea class="document-box" id="document" aria-label="Medical document text"></textarea>
+        <p class="sample-note">Tip: edit medication, lab, or insurance keywords and run the decoder again.</p>
+      </div>
+
+      <aside class="panel panel-pad">
+        <div class="panel-title"><h2>Options</h2><p>Preview controls</p></div>
+        <div class="option-list">
+          <div class="field">
+            <label for="language">Summary language</label>
+            <select id="language">
+              <option value="en">English</option>
+              <option value="zh">中文</option>
+              <option value="es">Español</option>
+            </select>
+          </div>
+          <button class="btn" id="decode">✦ Decode document</button>
+          <button class="btn secondary" id="plan">Extract action plan</button>
+          <div class="privacy">Demo boundary: educational sample output only. It is not a diagnosis, insurance determination, or medical advice.</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="results hidden" id="results" aria-live="polite">
+      <div class="panel panel-pad" id="decode-output">
+        <div class="panel-title"><h2>Plain-language summary</h2><span class="badge success">Decoded</span></div>
+        <p class="summary" id="summary"></p>
+        <div class="term-grid" id="terms"></div>
+        <div class="warning-list" id="warnings"></div>
+      </div>
+
+      <div class="panel panel-pad hidden" id="plan-output">
+        <div class="panel-title"><h2>Action plan</h2><span class="badge">Extracted from sample</span></div>
+        <div class="plan-grid" id="plan-cards"></div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+
+      <div class="panel panel-pad">
+        <div class="panel-title"><h2>Nearby pharmacy preview</h2><p>Generated demo locations</p></div>
+        <div class="pharmacy-controls">
+          <input class="input" id="zip" inputmode="numeric" maxlength="5" value="92697" aria-label="ZIP code" />
+          <button class="btn ghost" id="find">Find demo locations</button>
+        </div>
+        <div class="pharmacy-list" id="pharmacies"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var docs = {
+        discharge: {
+          text: "DISCHARGE SUMMARY\nDiagnosis: acute bronchitis with mild dehydration.\nMedications: Amoxicillin 500mg PO TID for 7 days. Guaifenesin 600mg q12h PRN. Albuterol HFA, 2 puffs q4-6h PRN for bronchospasm.\nFollow up with PCP in 5-7 business days. Rest for 48-72 hours and drink at least 2L of fluids daily. Return to ER for fever above 39C, dyspnea at rest, or hemoptysis.",
+          summary: {
+            en: "This is a hospital discharge summary for bronchitis and mild dehydration. It lists three medicines, asks you to rest and drink more water, and schedules a primary-care follow-up within one week.",
+            zh: "这是一份针对支气管炎和轻度脱水的出院小结。文件列出了三种药物，建议休息和补充水分，并要求在一周内复诊。",
+            es: "Este es un resumen de alta por bronquitis y deshidratación leve. Incluye tres medicamentos, descanso, hidratación y una consulta de seguimiento durante la próxima semana."
+          },
+          terms: [["Bronchitis", "Inflammation of the breathing tubes in the lungs."], ["TID", "Take the medicine three times a day."], ["PRN", "Use only when needed."], ["Dyspnea", "Shortness of breath or difficulty breathing."], ["Hemoptysis", "Coughing up blood."], ["PCP", "Your primary-care doctor."]],
+          warnings: ["Seek urgent care for trouble breathing while resting.", "Return to the ER for coughing up blood or fever above 39°C."],
+          plan: [["Amoxicillin", "500mg by mouth, three times daily for 7 days. Finish the full course."], ["Guaifenesin", "600mg every 12 hours as needed. Drink water with it."], ["Albuterol inhaler", "Two puffs every 4–6 hours as needed for chest tightness."], ["Follow-up", "Book a primary-care appointment within 5–7 business days."]],
+          timeline: [["Now", "Start medicines, increase fluids, and rest."], ["48–72h", "Resume normal activity only if symptoms improve."], ["Day 7", "Finish the Amoxicillin course and attend follow-up."]]
+        },
+        lab: {
+          text: "LAB RESULTS\nCBC: WBC 12.8 (H), Hemoglobin 11.2 (L), Hematocrit 34% (L).\nThyroid: TSH 6.1 (H), Free T4 0.7 (L). Impression: possible subclinical hypothyroidism.\nPlan: repeat CBC in 2 weeks, iron studies at next PCP visit, endocrinology referral in 2-4 weeks.",
+          summary: {
+            en: "Several blood results are outside the listed reference range. The document notes possible mild thyroid underactivity and recommends repeat blood work plus an endocrinology referral.",
+            zh: "几项血液检查结果超出了参考范围。文件提示可能存在轻度甲状腺功能减退，并建议复查血液及转诊内分泌科。",
+            es: "Varios resultados están fuera del rango de referencia. El documento señala una posible actividad tiroidea baja y recomienda repetir análisis y consultar endocrinología."
+          },
+          terms: [["WBC", "White blood cells, which can rise with infection or inflammation."], ["Hemoglobin", "A protein that carries oxygen in red blood cells."], ["TSH", "A hormone used to assess thyroid function."], ["Free T4", "An active thyroid hormone."], ["CBC", "A standard complete blood-count test."], ["Reference range", "The interval the laboratory marks as typical."]],
+          warnings: ["Some values are flagged high or low; discuss them with the ordering clinician."],
+          plan: [["Repeat CBC", "Repeat the complete blood count in two weeks."], ["Iron studies", "Arrange ferritin and related iron tests at the next PCP visit."], ["Endocrinology", "Schedule the referral within 2–4 weeks."], ["Questions", "Ask the clinician how the flagged values relate to symptoms."]],
+          timeline: [["2 weeks", "Repeat CBC blood test."], ["2–4 weeks", "Attend endocrinology referral."], ["Next visit", "Complete iron studies and review all results."]]
+        },
+        eob: {
+          text: "EXPLANATION OF BENEFITS\nOffice visit billed: $245. Plan discount: $75. Insurance paid: $102. Patient responsibility: $68.\nDeductible remaining: $430. Pulmonary function test requires prior authorization. You may appeal within 180 days.",
+          summary: {
+            en: "This is an insurance Explanation of Benefits, not a bill. It says the current patient responsibility is $68, with $430 remaining on the deductible, and notes that one test requires prior authorization.",
+            zh: "这是一份保险福利说明，并不是账单。文件显示目前患者需承担 68 美元，免赔额尚余 430 美元，其中一项检查需要事先授权。",
+            es: "Esta es una Explicación de Beneficios, no una factura. Indica una responsabilidad de $68, un deducible restante de $430 y una prueba que requiere autorización previa."
+          },
+          terms: [["EOB", "A statement explaining what insurance processed; it is not a bill."], ["Deductible", "What you pay before the plan begins sharing more costs."], ["Plan discount", "A negotiated reduction from the billed amount."], ["Patient responsibility", "The amount the EOB says may be owed."], ["Prior authorization", "Approval required before a covered service."], ["Appeal", "A request for the insurer to reconsider a decision."]],
+          warnings: ["Confirm prior authorization before scheduling the pulmonary test.", "Compare the final provider bill with this EOB before paying."],
+          plan: [["Check the bill", "Wait for the provider invoice and compare it with the $68 EOB amount."], ["Prior authorization", "Ask the provider or insurer to confirm approval before the test."], ["Appeal window", "If disputing the decision, submit an appeal within 180 days."], ["Keep records", "Save the EOB, bill, and authorization reference together."]],
+          timeline: [["Now", "Review the patient-responsibility amount."], ["Before testing", "Confirm prior authorization."], ["Within 180 days", "Submit an appeal if needed."]]
+        }
+      };
+
+      var current = "discharge";
+      var documentInput = document.getElementById("document");
+      var results = document.getElementById("results");
+      var toast = document.getElementById("toast");
+
+      function activeDoc() {
+        var text = documentInput.value.toLowerCase();
+        if (text.indexOf("eob") > -1 || text.indexOf("deductible") > -1 || text.indexOf("coinsurance") > -1) return docs.eob;
+        if (text.indexOf("tsh") > -1 || text.indexOf("hemoglobin") > -1 || text.indexOf("cbc") > -1) return docs.lab;
+        return docs.discharge;
+      }
+
+      function chooseSample(name) {
+        current = name;
+        documentInput.value = docs[name].text;
+        document.querySelectorAll("[data-sample]").forEach(function (button) {
+          button.classList.toggle("active", button.dataset.sample === name);
+        });
+        results.classList.add("hidden");
+        document.getElementById("plan-output").classList.add("hidden");
+      }
+
+      function loading(button, label, callback) {
+        var old = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner"></span> ' + label;
+        window.setTimeout(function () {
+          button.disabled = false;
+          button.innerHTML = old;
+          callback();
+        }, 650);
+      }
+
+      function renderDecode() {
+        var data = activeDoc();
+        var language = document.getElementById("language").value;
+        document.getElementById("summary").textContent = data.summary[language];
+        document.getElementById("terms").innerHTML = data.terms.map(function (term) {
+          return '<article class="term"><strong>' + term[0] + '</strong><p>' + term[1] + '</p></article>';
+        }).join("");
+        document.getElementById("warnings").innerHTML = data.warnings.map(function (warning) {
+          return '<div class="warning-item">⚠ ' + warning + '</div>';
+        }).join("");
+        results.classList.remove("hidden");
+        document.getElementById("decode-output").classList.remove("hidden");
+        showToast("Document decoded locally.");
+        results.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function renderPlan() {
+        var data = activeDoc();
+        document.getElementById("plan-cards").innerHTML = data.plan.map(function (item) {
+          return '<article class="plan-card"><h3>' + item[0] + '</h3><p>' + item[1] + '</p></article>';
+        }).join("");
+        document.getElementById("timeline").innerHTML = data.timeline.map(function (item) {
+          return '<div class="timeline-row"><span>' + item[0] + '</span><p>' + item[1] + '</p></div>';
+        }).join("");
+        results.classList.remove("hidden");
+        document.getElementById("decode-output").classList.add("hidden");
+        document.getElementById("plan-output").classList.remove("hidden");
+        showToast("Action plan extracted from the sample.");
+        results.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        window.setTimeout(function () { toast.classList.remove("show"); }, 1800);
+      }
+
+      document.querySelectorAll("[data-sample]").forEach(function (button) {
+        button.addEventListener("click", function () { chooseSample(button.dataset.sample); });
+      });
+
+      document.getElementById("decode").addEventListener("click", function () {
+        var button = this;
+        loading(button, "Decoding", renderDecode);
+      });
+      document.getElementById("plan").addEventListener("click", function () {
+        var button = this;
+        loading(button, "Extracting", renderPlan);
+      });
+      document.getElementById("find").addEventListener("click", function () {
+        var zip = document.getElementById("zip").value.replace(/\D/g, "").slice(0, 5);
+        document.getElementById("zip").value = zip;
+        if (zip.length !== 5) {
+          document.getElementById("pharmacies").innerHTML = '<div class="empty">Enter a valid 5-digit ZIP to generate demo locations.</div>';
+          showToast("A 5-digit ZIP is required.");
+          return;
+        }
+        var seed = Number(zip.slice(-2)) || 17;
+        var places = [["DemoCare Pharmacy", (0.4 + seed % 7 / 10).toFixed(1)], ["Community Rx", (1.1 + seed % 5 / 10).toFixed(1)], ["HealthHub Pharmacy", (2.0 + seed % 9 / 10).toFixed(1)]];
+        document.getElementById("pharmacies").innerHTML = places.map(function (place, index) {
+          return '<article class="pharmacy"><div><strong>' + place[0] + '</strong><p>Demo location ' + (index + 1) + ' near ZIP ' + zip + ' · verify details independently</p></div><span>' + place[1] + ' mi</span></article>';
+        }).join("");
+        showToast("Generated safe demo locations for " + zip + ".");
+      });
+      document.getElementById("reset").addEventListener("click", function () { window.location.reload(); });
+
+      chooseSample(current);
+    }());
+  </script>
+</body>
+</html>

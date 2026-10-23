@@ -18,7 +18,7 @@ Landing page for [0xClaw](https://github.com/0xclaw-ai/0xClaw) — Autonomous AI
 
 ## Development
 
-Single-file static site. No build step required.
+Static site with no build step required. The current homepage stays in `index.html`; the project-gallery preview is isolated in `showcase.html`.
 
 ```bash
 # Serve locally
@@ -26,6 +26,13 @@ npx serve .
 # or
 python3 -m http.server 8080
 ```
+
+Then open:
+
+- Homepage: <http://localhost:8080/>
+- Project showcase preview: <http://localhost:8080/showcase.html>
+
+The seven showcase demos run entirely in the browser. External wallets, chains, databases, model APIs, news feeds, and literature services are represented by deterministic sample data and are labelled inside each demo.
 
 ## Deploy
 
@@ -37,7 +44,19 @@ Push to `main`. GitHub Pages auto-deploys from repository root.
 
 ```
 .
-├── index.html            # Single page
+├── index.html            # Existing public homepage (unchanged)
+├── showcase.html         # Local project-gallery preview
+├── showcase.css
+├── showcase.js
+├── demos/                # Seven self-contained interactive previews
+│   ├── shared.css
+│   ├── clarify/
+│   ├── token/
+│   ├── aigent/
+│   ├── semantic/
+│   ├── steward/
+│   ├── litverify/
+│   └── signal/
 ├── assets/
 │   ├── 0xclaw_logo.png
 │   └── 0xClaw_combine.png

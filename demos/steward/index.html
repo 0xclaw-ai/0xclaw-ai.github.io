@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steward — Local Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    :root { --accent: #ee6d9e; --accent-2: #f8aac8; }
+    body { background: radial-gradient(circle at 86% 0%, rgba(238,109,158,.1), transparent 26rem), #0c0910; }
+    .control-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.02); }
+    .live-state { display: flex; align-items: center; gap: .55rem; font-size: .7rem; font-weight: 700; }
+    .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 0 rgba(67,209,158,.5); animation: pulse 1.8s infinite; }
+    .paused .pulse { background: var(--warning); box-shadow: none; animation: none; }
+    @keyframes pulse { 70% { box-shadow: 0 0 0 7px rgba(67,209,158,0); } 100% { box-shadow: 0 0 0 0 rgba(67,209,158,0); } }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .7rem; margin-bottom: 1rem; }
+    .metric strong small { color: var(--muted); font-size: .62rem; font-weight: 500; }
+    .job-list, .approval-list { display: grid; gap: .65rem; }
+    .job { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: start; gap: .7rem; padding: .78rem; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.018); }
+    .job-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; color: var(--accent-2); background: rgba(238,109,158,.1); font-size: .78rem; }
+    .job h3 { font-size: .73rem; }
+    .job p { margin-top: .28rem; color: var(--muted); font-size: .62rem; line-height: 1.5; }
+    .job-time { color: var(--muted); white-space: nowrap; font: .57rem ui-monospace, monospace; }
+    .approval { overflow: hidden; border: 1px solid rgba(238,109,158,.18); border-radius: 10px; background: rgba(238,109,158,.025); }
+    .approval-head { display: flex; justify-content: space-between; gap: .7rem; padding: .75rem .8rem; border-bottom: 1px solid var(--line); }
+    .approval-head h3 { font-size: .72rem; }
+    .approval-body { padding: .8rem; }
+    .approval-body > p { color: #c7c3cd; font-size: .66rem; line-height: 1.55; }
+    .diff { margin-top: .65rem; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; font: .61rem ui-monospace, monospace; }
+    .diff div { display: flex; justify-content: space-between; gap: .7rem; padding: .42rem .55rem; }
+    .diff div + div { border-top: 1px solid var(--line); }
+    .diff span:first-child { color: var(--muted); }
+    .approval-actions { display: flex; gap: .45rem; margin-top: .7rem; }
+    .approval-actions .btn { flex: 1; padding: .52rem; }
+    .timeline { position: relative; display: grid; gap: .15rem; margin-left: .3rem; }
+    .timeline::before { content: ""; position: absolute; top: 11px; bottom: 11px; left: 5px; width: 1px; background: var(--line); }
+    .event { position: relative; display: grid; grid-template-columns: 12px 80px minmax(0,1fr) auto; gap: .65rem; padding: .58rem 0; align-items: start; }
+    .event-dot { z-index: 1; width: 11px; height: 11px; margin-top: 2px; border: 2px solid var(--surface); border-radius: 50%; background: var(--accent); }
+    .event.success .event-dot { background: var(--success); }
+    .event.reject .event-dot { background: var(--danger); }
+    .event-time { color: var(--muted); font: .58rem ui-monospace, monospace; }
+    .event-copy strong { display: block; font-size: .67rem; }
+    .event-copy span { display: block; margin-top: .22rem; color: var(--muted); font-size: .61rem; line-height: 1.45; }
+    .empty-approval { display: grid; place-items: center; min-height: 280px; padding: 2rem; color: var(--muted); text-align: center; }
+    .empty-approval b { display: block; margin-bottom: .45rem; color: var(--text); font-size: .82rem; }
+    .empty-approval span { font-size: .68rem; line-height: 1.55; }
+    .run-progress { display: none; margin-top: .8rem; }
+    .run-progress.active { display: block; }
+    @media (max-width: 820px) { .summary-grid { grid-template-columns: repeat(2,1fr); } .event { grid-template-columns: 12px 65px 1fr; } .event > .badge { display:none; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">S</span>Steward</div>
+    <div class="demo-mode">Human-in-the-loop simulation</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <section class="hero-copy">
+      <p class="kicker">Autonomous operations / controlled execution</p>
+      <h1>Automation that asks<br>before it acts.</h1>
+      <p>Run a deterministic monitoring cycle, review the actions Steward proposes, then approve or reject each one. Every state change is recorded in the local audit timeline.</p>
+    </section>
+
+    <section class="control-bar" id="controlBar">
+      <div class="live-state"><i class="pulse"></i><span id="stateLabel">Steward is monitoring 3 jobs</span></div>
+      <div class="btn-row" style="margin:0">
+        <button class="btn secondary" id="pause">Pause</button>
+        <button class="btn" id="run">Run monitoring cycle</button>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <div class="metric"><span>Active jobs</span><strong>3 <small>/ 3</small></strong></div>
+      <div class="metric"><span>Pending approvals</span><strong id="pendingMetric">0</strong></div>
+      <div class="metric"><span>Executed today</span><strong id="executedMetric">4</strong></div>
+      <div class="metric"><span>Policy blocks</span><strong id="blockedMetric">1</strong></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="side-stack">
+        <article class="panel panel-pad">
+          <div class="panel-title"><div><h2>Active monitoring jobs</h2><p style="margin-top:.25rem">Rules are evaluated only when you run a cycle</p></div><span class="badge success">Healthy</span></div>
+          <div class="job-list">
+            <div class="job"><span class="job-icon">◎</span><div><h3>Treasury drift guard</h3><p>Propose a rebalance if any network allocation moves more than 8% from policy.</p></div><span class="job-time" id="jobTime1">checked 2m ago</span></div>
+            <div class="job"><span class="job-icon">⌁</span><div><h3>Repository issue triage</h3><p>Label reproducible high-priority issues and draft an assignee recommendation.</p></div><span class="job-time" id="jobTime2">checked 4m ago</span></div>
+            <div class="job"><span class="job-icon">◇</span><div><h3>Service budget sentinel</h3><p>Detect unusual infrastructure spend and recommend a reversible response.</p></div><span class="job-time" id="jobTime3">checked 7m ago</span></div>
+          </div>
+          <div class="run-progress" id="runProgress"><p class="small muted" id="runLabel" style="margin-bottom:.45rem">Reading local signals…</p><div class="progress-line"><i id="runBar"></i></div></div>
+        </article>
+
+        <article class="panel panel-pad">
+          <div class="panel-title"><h2>Immutable audit timeline</h2><span class="small muted">local session</span></div>
+          <div class="timeline" id="timeline"></div>
+        </article>
+      </div>
+
+      <aside class="panel panel-pad">
+        <div class="panel-title"><div><h2>Approval inbox</h2><p style="margin-top:.25rem">Nothing executes until you decide</p></div><span class="badge" id="inboxBadge">0 waiting</span></div>
+        <div class="approval-list" id="approvalList"></div>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var proposals = [
+        { id: "rebalance", title: "Rebalance Base treasury", risk: "Medium risk", riskClass: "warning", description: "Move a small portion of idle USDC to restore the configured network allocation.", rows: [["Action", "Transfer USDC"],["Amount", "$1,250.00"],["From → to", "Ethereum → Base"]] },
+        { id: "issue", title: "Triage issue #184", risk: "Low risk", riskClass: "success", description: "Apply labels and post a draft reproduction checklist. No code or repository settings will change.", rows: [["Action", "Comment + labels"],["Repository", "0xclaw-ai/0xClaw"],["Labels", "bug, needs-repro"]] },
+        { id: "budget", title: "Pause idle GPU worker", risk: "Medium risk", riskClass: "warning", description: "An idle worker exceeded the hourly budget threshold. Steward recommends pausing it for review.", rows: [["Action", "Pause worker"],["Resource", "gpu-worker-demo-03"],["Saving", "$3.20 / hour"]] }
+      ];
+      var pending = [];
+      var paused = false;
+      var executed = 4;
+      var blocked = 1;
+      var running = false;
+      var toastTimer;
+      var baseEvents = [
+        { type: "success", title: "Policy check passed", body: "All active jobs loaded with least-privilege scopes.", time: "09:42:10", badge: "policy" },
+        { type: "", title: "Monitoring cycle completed", body: "No action required across 3 local sample signals.", time: "09:41:58", badge: "observe" },
+        { type: "reject", title: "Unsafe action blocked", body: "Transfer destination was outside the approved address set.", time: "09:36:21", badge: "guardrail" }
+      ];
+      var events = baseEvents.slice();
+
+      function now() { return new Date().toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+      function showToast(message) {
+        var toast = document.getElementById("toast");
+        toast.textContent = message; toast.classList.add("show"); clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+      }
+      function addEvent(type, title, body, badge) { events.unshift({ type: type, title: title, body: body, time: now(), badge: badge }); renderTimeline(); }
+      function renderTimeline() {
+        var root = document.getElementById("timeline"); root.textContent = "";
+        events.slice(0, 8).forEach(function (entry) {
+          var item = document.createElement("div"); item.className = "event " + entry.type;
+          var dot = document.createElement("i"); dot.className = "event-dot";
+          var time = document.createElement("span"); time.className = "event-time"; time.textContent = entry.time;
+          var copy = document.createElement("div"); copy.className = "event-copy";
+          var title = document.createElement("strong"); title.textContent = entry.title;
+          var body = document.createElement("span"); body.textContent = entry.body;
+          copy.appendChild(title); copy.appendChild(body);
+          var badge = document.createElement("span"); badge.className = "badge"; badge.textContent = entry.badge;
+          item.appendChild(dot); item.appendChild(time); item.appendChild(copy); item.appendChild(badge); root.appendChild(item);
+        });
+      }
+      function updateMetrics() {
+        document.getElementById("pendingMetric").textContent = pending.length;
+        document.getElementById("executedMetric").textContent = executed;
+        document.getElementById("blockedMetric").textContent = blocked;
+        document.getElementById("inboxBadge").textContent = pending.length + " waiting";
+      }
+      function renderApprovals() {
+        var root = document.getElementById("approvalList"); root.textContent = "";
+        if (!pending.length) {
+          var empty = document.createElement("div"); empty.className = "empty-approval";
+          var inner = document.createElement("div"); var title = document.createElement("b"); title.textContent = "Inbox is clear";
+          var copy = document.createElement("span"); copy.textContent = "Run a monitoring cycle to generate three reviewable proposals from the sample signals.";
+          inner.appendChild(title); inner.appendChild(copy); empty.appendChild(inner); root.appendChild(empty); updateMetrics(); return;
+        }
+        pending.forEach(function (proposal) {
+          var card = document.createElement("article"); card.className = "approval"; card.dataset.id = proposal.id;
+          var head = document.createElement("div"); head.className = "approval-head";
+          var title = document.createElement("h3"); title.textContent = proposal.title;
+          var risk = document.createElement("span"); risk.className = "badge " + proposal.riskClass; risk.textContent = proposal.risk;
+          head.appendChild(title); head.appendChild(risk);
+          var body = document.createElement("div"); body.className = "approval-body";
+          var description = document.createElement("p"); description.textContent = proposal.description;
+          var diff = document.createElement("div"); diff.className = "diff";
+          proposal.rows.forEach(function (row) { var line = document.createElement("div"); var key = document.createElement("span"); var value = document.createElement("span"); key.textContent = row[0]; value.textContent = row[1]; line.appendChild(key); line.appendChild(value); diff.appendChild(line); });
+          var actions = document.createElement("div"); actions.className = "approval-actions";
+          var reject = document.createElement("button"); reject.className = "btn danger"; reject.textContent = "Reject"; reject.addEventListener("click", function () { decide(proposal.id, false); });
+          var approve = document.createElement("button"); approve.className = "btn"; approve.textContent = "Approve"; approve.addEventListener("click", function () { decide(proposal.id, true); });
+          actions.appendChild(reject); actions.appendChild(approve);
+          body.appendChild(description); body.appendChild(diff); body.appendChild(actions); card.appendChild(head); card.appendChild(body); root.appendChild(card);
+        });
+        updateMetrics();
+      }
+      function decide(id, approved) {
+        var proposal = pending.find(function (item) { return item.id === id; });
+        if (!proposal) return;
+        var card = document.querySelector('[data-id="' + id + '"]');
+        card.querySelectorAll("button").forEach(function (button) { button.disabled = true; });
+        if (!approved) {
+          pending = pending.filter(function (item) { return item.id !== id; }); blocked += 1;
+          addEvent("reject", "Proposal rejected", proposal.title + " was dismissed by the reviewer.", "human decision");
+          showToast("Proposal rejected — no action taken"); renderApprovals(); return;
+        }
+        var badge = card.querySelector(".badge"); badge.className = "badge"; badge.innerHTML = '<span class="spinner"></span> Executing';
+        addEvent("", "Execution authorized", proposal.title + " entered the local execution simulator.", "approval");
+        setTimeout(function () {
+          pending = pending.filter(function (item) { return item.id !== id; }); executed += 1;
+          addEvent("success", "Action verified", proposal.title + " completed and produced a demo audit receipt.", "receipt");
+          showToast("Approved action completed in simulation"); renderApprovals();
+        }, 900);
+      }
+      function runCycle() {
+        if (paused) { showToast("Resume Steward before running a cycle"); return; }
+        if (running) return;
+        if (pending.length) { showToast("Review the current inbox before running again"); return; }
+        running = true; var button = document.getElementById("run"); var progress = document.getElementById("runProgress"); var bar = document.getElementById("runBar"); var label = document.getElementById("runLabel");
+        button.disabled = true; button.innerHTML = '<span class="spinner"></span> Monitoring'; progress.classList.add("active"); bar.style.setProperty("--progress", "22%");
+        label.textContent = "Reading local signals…";
+        setTimeout(function () { bar.style.setProperty("--progress", "62%"); label.textContent = "Evaluating guardrail policies…"; }, 500);
+        setTimeout(function () { bar.style.setProperty("--progress", "100%"); label.textContent = "Preparing human-readable proposals…"; }, 1000);
+        setTimeout(function () {
+          pending = proposals.slice(); running = false; button.disabled = false; button.textContent = "Run monitoring cycle";
+          document.getElementById("jobTime1").textContent = "checked just now"; document.getElementById("jobTime2").textContent = "checked just now"; document.getElementById("jobTime3").textContent = "checked just now";
+          addEvent("", "3 proposals prepared", "Each candidate action is waiting for explicit human review.", "approval gate"); renderApprovals(); showToast("Monitoring complete — 3 decisions need review");
+          setTimeout(function () { progress.classList.remove("active"); bar.style.setProperty("--progress", "0%"); }, 450);
+        }, 1450);
+      }
+      function togglePause() {
+        paused = !paused; var control = document.getElementById("controlBar"); var button = document.getElementById("pause");
+        control.classList.toggle("paused", paused); button.textContent = paused ? "Resume" : "Pause"; document.getElementById("stateLabel").textContent = paused ? "Steward is paused — no monitoring will run" : "Steward is monitoring 3 jobs";
+        document.getElementById("run").disabled = paused; addEvent(paused ? "reject" : "success", paused ? "Steward paused" : "Steward resumed", paused ? "All jobs are held until a human resumes the loop." : "Monitoring jobs returned to their active state.", "control");
+      }
+      function reset() {
+        pending = []; paused = false; executed = 4; blocked = 1; running = false; events = baseEvents.slice();
+        document.getElementById("controlBar").classList.remove("paused"); document.getElementById("pause").textContent = "Pause"; document.getElementById("stateLabel").textContent = "Steward is monitoring 3 jobs";
+        document.getElementById("run").disabled = false; document.getElementById("run").textContent = "Run monitoring cycle"; document.getElementById("runProgress").classList.remove("active");
+        renderTimeline(); renderApprovals(); showToast("Demo reset");
+      }
+      document.getElementById("run").addEventListener("click", runCycle);
+      document.getElementById("pause").addEventListener("click", togglePause);
+      document.getElementById("reset").addEventListener("click", reset);
+      renderTimeline(); renderApprovals();
+    }());
+  </script>
+</body>
+</html>

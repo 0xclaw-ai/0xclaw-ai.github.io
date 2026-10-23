@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clarify — Recording Demo</title>
+  <link rel="icon" href="/assets/0xclaw_logo.png" type="image/png">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090a12;
+      --surface: #11121c;
+      --surface-2: #0d0e16;
+      --line: rgba(255,255,255,.09);
+      --text: #f5f5f7;
+      --muted: #8d91a2;
+      --accent: #6d5dfc;
+      --accent-2: #39e2bd;
+      --warning: #f6bd52;
+      --danger: #ef6a72;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 82% -14%, rgba(109,93,252,.17), transparent 34rem),
+        radial-gradient(circle at 5% 100%, rgba(57,226,189,.07), transparent 28rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; color: inherit; }
+    .topbar {
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(24px, 4vw, 64px);
+      border-bottom: 1px solid var(--line);
+      background: rgba(9,10,18,.78);
+      backdrop-filter: blur(18px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 760; letter-spacing: -.02em; }
+    .brand img { width: 28px; height: 28px; object-fit: contain; }
+    .safe-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 650 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .safe-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); }
+    .restart { padding: 7px 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); background: transparent; cursor: pointer; font-size: 11px; }
+    .restart:hover { color: var(--text); border-color: rgba(109,93,252,.48); }
+    main {
+      height: calc(100vh - 62px);
+      width: min(1520px, calc(100% - 64px));
+      margin: 0 auto;
+      padding: clamp(22px, 3vh, 34px) 0 30px;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 2vh, 20px);
+    }
+    .intro { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(320px,.75fr); align-items: end; gap: 28px; }
+    .kicker { color: #a79dfd; font: 700 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin-top: 8px; font-size: clamp(29px, 3.2vw, 48px); line-height: 1.04; letter-spacing: -.045em; }
+    h1 em { color: var(--accent-2); font-style: normal; }
+    .intro-copy { padding-bottom: 3px; color: var(--muted); font-size: clamp(12px, 1.1vw, 15px); line-height: 1.65; }
+    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .step { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; color: #686c7b; background: rgba(255,255,255,.016); transition: .3s ease; }
+    .step i { width: 21px; height: 21px; display: grid; place-items: center; flex: 0 0 21px; border: 1px solid currentColor; border-radius: 50%; font: 700 9px ui-monospace, monospace; font-style: normal; }
+    .step span { font-size: 11px; font-weight: 650; }
+    .step.active { color: #d9d5ff; border-color: rgba(109,93,252,.42); background: rgba(109,93,252,.08); }
+    .step.done { color: var(--accent-2); border-color: rgba(57,226,189,.25); background: rgba(57,226,189,.045); }
+    .workspace { min-height: 0; flex: 1; display: grid; grid-template-columns: minmax(0,.92fr) minmax(0,1.08fr); gap: 16px; }
+    .panel { min-height: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: rgba(17,18,28,.92); box-shadow: 0 24px 70px rgba(0,0,0,.2); }
+    .panel-head { min-height: 51px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 17px; border-bottom: 1px solid var(--line); }
+    .panel-head h2 { font-size: 13px; letter-spacing: -.01em; }
+    .badge { padding: 5px 8px; border-radius: 999px; color: var(--accent-2); background: rgba(57,226,189,.08); font: 700 8px ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; }
+    .source-panel { display: flex; flex-direction: column; }
+    .note { flex: 1; overflow: auto; padding: clamp(18px, 2.3vw, 27px); color: #bfc1cc; font: 13px/1.73 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .note-title { margin-bottom: 16px; color: #f1f0f5; font-size: 14px; font-weight: 750; letter-spacing: .06em; }
+    .note p + p { margin-top: 12px; }
+    .note b { color: #f1f0f5; }
+    .jargon { padding: 2px 5px; border: 1px solid rgba(109,93,252,.25); border-radius: 4px; color: #c8c2ff; background: rgba(109,93,252,.1); }
+    .source-action { padding: 14px 17px; border-top: 1px solid var(--line); }
+    .primary {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-radius: 9px;
+      color: #fff;
+      background: linear-gradient(120deg, #6958f5, #7d69ff);
+      box-shadow: 0 9px 24px rgba(109,93,252,.2);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 760;
+      transition: transform .16s, filter .16s;
+    }
+    .primary:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .primary:disabled { opacity: .66; cursor: wait; transform: none; }
+    .result-panel { display: flex; flex-direction: column; }
+    .result-stage { position: relative; min-height: 0; flex: 1; overflow: auto; }
+    .empty { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; text-align: center; }
+    .empty-mark { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 14px; border: 1px solid rgba(109,93,252,.3); border-radius: 16px; color: #b8afff; background: rgba(109,93,252,.08); font-size: 22px; }
+    .empty h3 { font-size: 15px; }
+    .empty p { max-width: 370px; margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .loading { position: absolute; inset: 0; display: none; place-items: center; padding: 30px; text-align: center; background: rgba(13,14,22,.92); }
+    .loading.show { display: grid; }
+    .loader { width: 34px; height: 34px; margin: 0 auto 13px; border: 2px solid rgba(255,255,255,.12); border-top-color: var(--accent-2); border-radius: 50%; animation: spin .72s linear infinite; }
+    .loading b { font-size: 13px; }
+    .loading p { margin-top: 6px; color: var(--muted); font-size: 11px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .screen { display: none; min-height: 100%; padding: clamp(17px, 2.1vw, 25px); animation: reveal .38s ease both; }
+    .screen.show { display: block; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(8px); } }
+    .screen-label { color: var(--accent-2); font: 700 9px ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .summary { margin-top: 9px; color: #e1e2e8; font-size: clamp(13px,1.1vw,16px); line-height: 1.62; }
+    .glossary { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 14px; }
+    .term { padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.023); }
+    .term b { display: block; color: var(--accent-2); font: 750 11px ui-monospace, monospace; }
+    .term p { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .warning { margin-top: 11px; padding: 10px 12px; border-left: 2px solid var(--warning); border-radius: 0 7px 7px 0; color: #ddcfae; background: rgba(246,189,82,.055); font-size: 10px; line-height: 1.5; }
+    .next-button { width: auto; min-height: 39px; margin-top: 13px; padding: 0 16px; }
+    .plan-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-top: 12px; }
+    .plan-card { padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.022); }
+    .plan-card h3 { color: var(--accent-2); font-size: 11px; }
+    .plan-card p { margin-top: 4px; color: var(--muted); font-size: 9.5px; line-height: 1.48; }
+    .timeline-title { margin-top: 13px; font-size: 11px; }
+    .timeline { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 8px; }
+    .time { position: relative; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #0e0f18; }
+    .time span { color: #b8afff; font: 750 9px ui-monospace, monospace; }
+    .time p { margin-top: 4px; color: #b7b9c5; font-size: 9px; line-height: 1.4; }
+    .disclaimer { color: var(--muted); font-size: 9px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; z-index: 10; padding: 10px 13px; border: 1px solid rgba(57,226,189,.24); border-radius: 8px; color: #d8fff4; background: #10201b; font-size: 10px; transform: translateY(16px); opacity: 0; transition: .22s ease; }
+    .toast.show { transform: none; opacity: 1; }
+    @media (max-height: 820px) and (min-width: 900px) {
+      main { width: min(1520px, calc(100% - 44px)); padding-top: 16px; gap: 11px; }
+      h1 { font-size: 34px; }
+      .intro-copy { font-size: 12px; }
+      .step { padding-block: 7px; }
+      .note { padding-block: 16px; font-size: 11.5px; line-height: 1.58; }
+      .note p + p { margin-top: 8px; }
+      .panel-head { min-height: 44px; padding-block: 9px; }
+      .source-action { padding-block: 10px; }
+      .primary { min-height: 38px; }
+      .screen { padding: 15px 18px; }
+      .summary { font-size: 12px; }
+      .glossary { margin-top: 9px; }
+      .term { padding: 8px; }
+      .warning, .next-button, .plan-grid, .timeline-title { margin-top: 8px; }
+      .plan-card { padding: 8px 10px; }
+      .timeline { margin-top: 6px; }
+    }
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      main { height: auto; width: min(100% - 24px, 760px); }
+      .intro, .workspace { grid-template-columns: 1fr; }
+      .workspace { min-height: 1040px; }
+      .source-panel, .result-panel { min-height: 500px; }
+      .steps { grid-template-columns: 1fr; }
+      .glossary, .timeline { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="/assets/0xclaw_logo.png" alt="0xClaw"><span>Clarify</span></div>
+    <div class="safe-label">Local sample · no upload</div>
+    <button class="restart" id="restart">Restart demo</button>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><p class="kicker">AI medical document decoder</p><h1>Understand the note.<br><em>Know what to do next.</em></h1></div>
+      <p class="intro-copy">A safe, English-language walkthrough using a fictional discharge summary. No patient data leaves the browser.</p>
+    </section>
+
+    <div class="steps" aria-label="Demo progress">
+      <div class="step active" data-progress="1"><i>1</i><span>Source note</span></div>
+      <div class="step" data-progress="2"><i>2</i><span>Plain-English decode</span></div>
+      <div class="step" data-progress="3"><i>3</i><span>Action plan</span></div>
+    </div>
+
+    <section class="workspace">
+      <article class="panel source-panel">
+        <div class="panel-head"><h2>Discharge summary</h2><span class="badge">Fictional sample</span></div>
+        <div class="note">
+          <div class="note-title">DISCHARGE SUMMARY</div>
+          <p><b>Diagnosis:</b> acute bronchitis with mild dehydration.</p>
+          <p><b>Medications:</b> Amoxicillin 500mg <span class="jargon">PO TID</span> for 7 days. Guaifenesin 600mg q12h <span class="jargon">PRN</span>. Albuterol HFA, 2 puffs q4–6h PRN for bronchospasm.</p>
+          <p><b>Follow-up:</b> PCP in 5–7 business days. Rest for 48–72 hours and drink at least 2L of fluids daily.</p>
+          <p><b>Return to urgent care for:</b> fever above 39°C, <span class="jargon">dyspnea</span> at rest, or hemoptysis.</p>
+        </div>
+        <div class="source-action"><button class="primary" id="decode">Decode in plain English</button></div>
+      </article>
+
+      <article class="panel result-panel">
+        <div class="panel-head"><h2 id="resultTitle">Clarify output</h2><span class="disclaimer">Educational preview · not medical advice</span></div>
+        <div class="result-stage">
+          <div class="empty" id="emptyState"><div><div class="empty-mark">✦</div><h3>Ready to decode</h3><p>Clarify will translate clinical shorthand into a readable summary, explain key terms, and build a practical follow-up plan.</p></div></div>
+          <div class="loading" id="loading"><div><div class="loader"></div><b id="loadingTitle">Reading the clinical note…</b><p>Finding medications, instructions, and warning signs</p></div></div>
+
+          <section class="screen" id="decodeScreen">
+            <p class="screen-label">Plain-English summary</p>
+            <p class="summary">This is a discharge note for bronchitis and mild dehydration. It lists three medicines, asks the patient to rest and drink more water, and schedules a primary-care follow-up within one week.</p>
+            <div class="glossary">
+              <article class="term"><b>PO TID</b><p>Take the medicine by mouth three times a day.</p></article>
+              <article class="term"><b>PRN</b><p>Use only when needed.</p></article>
+              <article class="term"><b>Dyspnea</b><p>Shortness of breath or difficulty breathing.</p></article>
+            </div>
+            <div class="warning">Seek urgent medical care for trouble breathing while resting, coughing up blood, or a fever above 39°C.</div>
+            <button class="primary next-button" id="buildPlan">Build the action plan →</button>
+          </section>
+
+          <section class="screen" id="planScreen">
+            <p class="screen-label">Personal action plan</p>
+            <div class="plan-grid">
+              <article class="plan-card"><h3>Amoxicillin</h3><p>500mg by mouth, three times daily for 7 days. Finish the full course.</p></article>
+              <article class="plan-card"><h3>Guaifenesin</h3><p>600mg every 12 hours as needed. Drink water with it.</p></article>
+              <article class="plan-card"><h3>Albuterol inhaler</h3><p>Two puffs every 4–6 hours as needed for chest tightness.</p></article>
+              <article class="plan-card"><h3>Follow-up</h3><p>Book a primary-care appointment within 5–7 business days.</p></article>
+            </div>
+            <h3 class="timeline-title">What happens next</h3>
+            <div class="timeline">
+              <article class="time"><span>NOW</span><p>Start medicines, increase fluids, and rest.</p></article>
+              <article class="time"><span>48–72 HOURS</span><p>Resume normal activity only if symptoms improve.</p></article>
+              <article class="time"><span>DAY 7</span><p>Finish the antibiotic course and attend follow-up.</p></article>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var empty = document.getElementById("emptyState");
+      var loading = document.getElementById("loading");
+      var decodeScreen = document.getElementById("decodeScreen");
+      var planScreen = document.getElementById("planScreen");
+      var decode = document.getElementById("decode");
+      var toastTimer;
+
+      function setProgress(value) {
+        document.querySelectorAll("[data-progress]").forEach(function (step) {
+          var number = Number(step.dataset.progress);
+          step.classList.toggle("active", number === value);
+          step.classList.toggle("done", number < value);
+          step.querySelector("i").textContent = number < value ? "✓" : String(number);
+        });
+      }
+
+      function showToast(message) {
+        var toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 1900);
+      }
+
+      function showLoading(title) {
+        empty.style.display = "none";
+        decodeScreen.classList.remove("show");
+        planScreen.classList.remove("show");
+        document.getElementById("loadingTitle").textContent = title;
+        loading.classList.add("show");
+      }
+
+      decode.addEventListener("click", function () {
+        decode.disabled = true;
+        decode.textContent = "Decoding sample…";
+        showLoading("Reading the clinical note…");
+        setTimeout(function () { document.getElementById("loadingTitle").textContent = "Explaining clinical shorthand…"; }, 520);
+        setTimeout(function () {
+          loading.classList.remove("show");
+          decodeScreen.classList.add("show");
+          document.getElementById("resultTitle").textContent = "Plain-English decode";
+          decode.textContent = "Decoded ✓";
+          setProgress(2);
+          showToast("The discharge note is now easier to understand.");
+        }, 1150);
+      });
+
+      document.getElementById("buildPlan").addEventListener("click", function () {
+        showLoading("Turning instructions into next steps…");
+        setTimeout(function () {
+          loading.classList.remove("show");
+          planScreen.classList.add("show");
+          document.getElementById("resultTitle").textContent = "Action plan";
+          setProgress(3);
+          showToast("Medication and follow-up plan ready.");
+        }, 980);
+      });
+
+      document.getElementById("restart").addEventListener("click", function () {
+        empty.style.display = "grid";
+        loading.classList.remove("show");
+        decodeScreen.classList.remove("show");
+        planScreen.classList.remove("show");
+        decode.disabled = false;
+        decode.textContent = "Decode in plain English";
+        document.getElementById("resultTitle").textContent = "Clarify output";
+        setProgress(1);
+        showToast("Demo restarted.");
+      });
+    }());
+  </script>
+</body>
+</html>

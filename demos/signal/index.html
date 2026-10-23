@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal — Local Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    :root { --accent: #5e8cff; --accent-2: #aac1ff; }
+    body { background: radial-gradient(circle at 78% -8%, rgba(94,140,255,.12), transparent 29rem), #080b12; }
+    .tape { display: flex; gap: 1.6rem; overflow: hidden; padding: .55rem 1rem; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: rgba(255,255,255,.02); font: .61rem ui-monospace, monospace; white-space: nowrap; }
+    .ticker { display: flex; gap: 1.6rem; min-width: max-content; animation: ticker 22s linear infinite; }
+    .ticker b { margin-left: .35rem; color: var(--text); }
+    .ticker .up { color: var(--success); } .ticker .down { color: var(--danger); }
+    @keyframes ticker { to { transform: translateX(-50%); } }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .7rem; margin: 1rem 0; }
+    .metric strong small { font-size: .65rem; color: var(--muted); }
+    .news-list { display: grid; gap: .6rem; }
+    .news { width: 100%; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: .7rem; padding: .78rem; border: 1px solid var(--line); border-radius: 9px; color: inherit; text-align: left; background: rgba(255,255,255,.016); cursor: pointer; }
+    .news:hover, .news.active { border-color: rgba(94,140,255,.42); background: rgba(94,140,255,.05); }
+    .asset { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: var(--accent-2); background: rgba(94,140,255,.11); font: 700 .6rem ui-monospace, monospace; }
+    .news h3 { font-size: .72rem; line-height: 1.35; }
+    .news p { margin-top: .3rem; color: var(--muted); font-size: .6rem; line-height: 1.45; }
+    .news-time { color: var(--muted); font: .55rem ui-monospace, monospace; }
+    .settings { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: .8rem; }
+    .range-wrap { padding: .7rem; border: 1px solid var(--line); border-radius: 8px; }
+    .range-label { display: flex; justify-content: space-between; gap: .5rem; color: var(--muted); font-size: .61rem; }
+    input[type="range"] { width: 100%; margin-top: .65rem; accent-color: var(--accent); }
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .7rem; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: .61rem; }
+    .switch { position: relative; width: 36px; height: 20px; border: 0; border-radius: 99px; background: var(--success); cursor: pointer; transition: background .18s; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 19px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .18s; }
+    .switch.off { background: var(--danger); }
+    .switch.off::after { left: 3px; }
+    .flow { display: grid; grid-template-columns: repeat(5,1fr); gap: .4rem; margin-bottom: .85rem; }
+    .flow-step { position: relative; padding: .58rem .4rem; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); text-align: center; font: .56rem ui-monospace, monospace; }
+    .flow-step.active { color: var(--accent-2); border-color: rgba(94,140,255,.45); background: rgba(94,140,255,.06); }
+    .flow-step.done { color: var(--success); border-color: rgba(67,209,158,.22); }
+    .decision-empty { min-height: 330px; display: grid; place-items: center; text-align: center; padding: 2rem; }
+    .decision-empty i { width: 50px; height: 50px; display: grid; place-items: center; margin: 0 auto .8rem; border-radius: 50%; color: var(--accent); background: rgba(94,140,255,.1); font-style: normal; }
+    .decision-empty b { display: block; font-size: .85rem; }
+    .decision-empty p { max-width: 320px; margin-top: .45rem; color: var(--muted); font-size: .66rem; line-height: 1.6; }
+    .decision-card { padding: 1rem; border: 1px solid rgba(94,140,255,.22); border-radius: 10px; background: linear-gradient(135deg, rgba(94,140,255,.075), rgba(255,255,255,.01)); }
+    .decision-card.blocked { border-color: rgba(239,106,114,.28); background: linear-gradient(135deg, rgba(239,106,114,.07), rgba(255,255,255,.01)); }
+    .decision-top { display: flex; align-items: start; justify-content: space-between; gap: .7rem; }
+    .direction { font-size: 2.4rem; line-height: 1; letter-spacing: -.06em; }
+    .direction.up { color: var(--success); } .direction.down { color: var(--danger); } .direction.block { color: var(--warning); }
+    .confidence { width: 86px; height: 86px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--accent) var(--angle), rgba(255,255,255,.06) 0); }
+    .confidence::before { content: ""; grid-area: 1/1; width: 66px; height: 66px; border-radius: 50%; background: var(--surface); }
+    .confidence span { z-index: 1; grid-area: 1/1; text-align: center; font: 700 .9rem ui-monospace, monospace; }
+    .confidence small { display: block; margin-top: .12rem; color: var(--muted); font-size: .48rem; }
+    .reasoning { margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+    .reasoning p { color: #c4c9d6; font-size: .68rem; line-height: 1.62; }
+    .order { display: grid; grid-template-columns: repeat(3,1fr); gap: .5rem; margin-top: .8rem; }
+    .order div { padding: .6rem; border: 1px solid var(--line); border-radius: 7px; }
+    .order span { display: block; color: var(--muted); font-size: .54rem; text-transform: uppercase; letter-spacing: .06em; }
+    .order b { display: block; margin-top: .3rem; font: 650 .68rem ui-monospace, monospace; }
+    .log { display: grid; gap: .4rem; }
+    .log-item { display: grid; grid-template-columns: 58px 72px minmax(0,1fr); gap: .6rem; padding: .5rem 0; border-bottom: 1px solid var(--line); align-items: start; }
+    .log-item time { color: var(--muted); font: .55rem ui-monospace, monospace; }
+    .log-item p { color: #b8bdca; font-size: .61rem; line-height: 1.45; }
+    @media (max-width: 760px) { .summary-grid { grid-template-columns: repeat(2,1fr); } .settings { grid-template-columns: 1fr; } .flow { grid-template-columns: repeat(5, minmax(58px,1fr)); overflow-x:auto; } .order { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">↗</span>Signal</div>
+    <div class="demo-mode">Prediction-market sandbox</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <section class="hero-copy">
+      <p class="kicker">News intelligence / guarded agent execution</p>
+      <h1>Turn market news<br>into bounded decisions.</h1>
+      <p>Select a bundled news event and let Signal map it to a sample prediction market, score confidence, apply your guardrails, and simulate an order. Low-quality information is blocked automatically.</p>
+    </section>
+
+    <div class="tape" aria-label="Sample market prices"><div class="ticker"><span>BTC 30 SEP ABOVE $72K <b>61¢</b> <i class="up">+4.2%</i></span><span>ETH ETF INFLOW THIS WEEK <b>57¢</b> <i class="up">+2.8%</i></span><span>SOL ABOVE $160 FRIDAY <b>44¢</b> <i class="down">−6.1%</i></span><span>FED CUT NEXT MEETING <b>69¢</b> <i class="up">+1.4%</i></span><span>BTC 30 SEP ABOVE $72K <b>61¢</b> <i class="up">+4.2%</i></span><span>ETH ETF INFLOW THIS WEEK <b>57¢</b> <i class="up">+2.8%</i></span></div></div>
+
+    <section class="summary-grid">
+      <div class="metric"><span>Demo balance</span><strong id="balance">$250.00</strong></div>
+      <div class="metric"><span>Open positions</span><strong id="positions">2</strong></div>
+      <div class="metric"><span>Session P&amp;L</span><strong style="color:var(--success)">+$8.40</strong></div>
+      <div class="metric"><span>Risk used</span><strong id="riskUsed">18<small>%</small></strong></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="side-stack">
+        <article class="panel panel-pad">
+          <div class="panel-title"><div><h2>Live news wire</h2><p style="margin-top:.25rem">bundled sample events</p></div><span class="badge success">4 signals</span></div>
+          <div class="news-list" id="newsList"></div>
+          <div class="settings">
+            <div class="range-wrap"><div class="range-label"><span>Max demo order</span><b id="stakeValue">$15</b></div><input id="stake" type="range" min="5" max="25" step="5" value="15"></div>
+            <div class="toggle-wrap"><span>Agent execution enabled</span><button class="switch" id="executionToggle" aria-label="Toggle execution"></button></div>
+          </div>
+          <button class="btn" id="run" style="width:100%;margin-top:.75rem">Analyze selected signal</button>
+        </article>
+        <article class="panel panel-pad">
+          <div class="panel-title"><h2>Session event log</h2><span class="small muted">local only</span></div>
+          <div class="log" id="log"></div>
+        </article>
+      </div>
+
+      <aside class="side-stack">
+        <article class="panel panel-pad">
+          <div class="panel-title"><h2>Signal agent</h2><span class="badge" id="agentBadge">Idle</span></div>
+          <div class="flow"><div class="flow-step">Ingest</div><div class="flow-step">Map</div><div class="flow-step">Score</div><div class="flow-step">Guard</div><div class="flow-step">Order</div></div>
+          <div id="decision"><div class="decision-empty"><div><i>◎</i><b>Waiting for a signal</b><p>Choose a news item and run the agent to see its market mapping, confidence score, guardrail decision, and simulated receipt.</p></div></div></div>
+        </article>
+        <article class="panel panel-pad">
+          <p class="kicker">Safe by construction</p>
+          <p class="small muted" style="margin-top:.6rem;line-height:1.65">No wallet, prediction-market API, or live news feed is connected. Every order is simulated, capped by your local stake setting, and recorded only in this browser session.</p>
+        </article>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var items = [
+        { id: "btc", asset: "BTC", title: "Institutional spot Bitcoin inflows accelerate for a third session", source: "Market Desk · verified sample", time: "2m", market: "BTC above $72K on 30 September", direction: "UP", confidence: 82, stake: 12, price: "61¢", reason: "The event is directionally aligned with near-term demand and maps cleanly to the selected Bitcoin price market. Confidence remains below certainty because flow persistence is unknown." },
+        { id: "eth", asset: "ETH", title: "Ether ETF basket records its strongest sample inflow this month", source: "Fund Monitor · verified sample", time: "7m", market: "ETH ETF net inflow this week", direction: "UP", confidence: 76, stake: 10, price: "57¢", reason: "The report directly addresses the weekly inflow condition. Signal discounts confidence for the remaining sessions and the possibility of later outflows." },
+        { id: "sol", asset: "SOL", title: "Major Solana application reports a temporary service disruption", source: "Status Wire · verified sample", time: "11m", market: "SOL above $160 on Friday", direction: "DOWN", confidence: 84, stake: 14, price: "44¢", reason: "A confirmed disruption creates a short-lived negative catalyst for the mapped price market. The agent limits size because service recovery could quickly reverse sentiment." },
+        { id: "rumor", asset: "???", title: "Anonymous post claims a whale will buy every major token tonight", source: "Unverified social rumor", time: "now", market: "Broad crypto market rises today", direction: "BLOCK", confidence: 41, stake: 0, price: "52¢", reason: "The source is anonymous, the claim is not independently corroborated, and the market mapping is overly broad. The 65% confidence guardrail blocks execution." }
+      ];
+      var selected = 0;
+      var enabled = true;
+      var running = false;
+      var balance = 250;
+      var positions = 2;
+      var risk = 18;
+      var timers = [];
+      var toastTimer;
+      var logs = [{ time: "09:42", kind: "READY", body: "Signal sandbox initialized with four bundled events." }, { time: "09:41", kind: "POLICY", body: "Confidence floor set to 65%; live execution disconnected." }];
+      function now() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }); }
+      function showToast(message) { var toast = document.getElementById("toast"); toast.textContent = message; toast.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200); }
+      function renderNews() {
+        var root = document.getElementById("newsList"); root.textContent = "";
+        items.forEach(function (item, index) { var button = document.createElement("button"); button.type = "button"; button.className = "news" + (index === selected ? " active" : ""); var asset = document.createElement("span"); asset.className = "asset"; asset.textContent = item.asset; var copy = document.createElement("span"); var title = document.createElement("h3"); title.textContent = item.title; var source = document.createElement("p"); source.textContent = item.source; copy.appendChild(title); copy.appendChild(source); var time = document.createElement("span"); time.className = "news-time"; time.textContent = item.time; button.appendChild(asset); button.appendChild(copy); button.appendChild(time); button.addEventListener("click", function () { selected = index; renderNews(); document.getElementById("decision").innerHTML = '<div class="decision-empty"><div><i>◎</i><b>Signal selected</b><p>Run the agent to map this event and apply the configured guardrails.</p></div></div>'; resetFlow(); }); root.appendChild(button); });
+      }
+      function renderLogs() { var root = document.getElementById("log"); root.textContent = ""; logs.slice(0, 6).forEach(function (entry) { var item = document.createElement("div"); item.className = "log-item"; var time = document.createElement("time"); time.textContent = entry.time; var badge = document.createElement("span"); badge.className = "badge"; badge.textContent = entry.kind; var body = document.createElement("p"); body.textContent = entry.body; item.appendChild(time); item.appendChild(badge); item.appendChild(body); root.appendChild(item); }); }
+      function addLog(kind, body) { logs.unshift({ time: now(), kind: kind, body: body }); renderLogs(); }
+      function resetFlow() { document.querySelectorAll(".flow-step").forEach(function (step) { step.classList.remove("active", "done"); }); document.getElementById("agentBadge").textContent = "Idle"; }
+      function setFlow(index) { document.querySelectorAll(".flow-step").forEach(function (step, stepIndex) { step.classList.toggle("active", stepIndex === index); step.classList.toggle("done", stepIndex < index); }); }
+      function renderDecision(item, blocked, amount) {
+        var root = document.getElementById("decision"); root.textContent = ""; var card = document.createElement("div"); card.className = "decision-card" + (blocked ? " blocked" : "");
+        var top = document.createElement("div"); top.className = "decision-top"; var left = document.createElement("div"); var badge = document.createElement("span"); badge.className = "badge " + (blocked ? "warning" : "success"); badge.textContent = blocked ? "Guardrail stopped order" : "Simulated order filled"; var direction = document.createElement("div"); direction.className = "direction " + (item.direction === "UP" ? "up" : item.direction === "DOWN" ? "down" : "block"); direction.style.marginTop = ".55rem"; direction.textContent = blocked ? "NO TRADE" : item.direction; left.appendChild(badge); left.appendChild(direction);
+        var confidence = document.createElement("div"); confidence.className = "confidence"; confidence.style.setProperty("--angle", item.confidence * 3.6 + "deg"); var confidenceCopy = document.createElement("span"); confidenceCopy.textContent = item.confidence + "%"; var small = document.createElement("small"); small.textContent = "confidence"; confidenceCopy.appendChild(small); confidence.appendChild(confidenceCopy); top.appendChild(left); top.appendChild(confidence);
+        var reasoning = document.createElement("div"); reasoning.className = "reasoning"; var text = document.createElement("p"); text.textContent = item.reason; reasoning.appendChild(text);
+        var order = document.createElement("div"); order.className = "order"; [["Mapped market",item.market],["Reference price",item.price],["Demo amount",blocked ? "$0.00" : "$" + amount.toFixed(2)]].forEach(function (row) { var cell = document.createElement("div"); var label = document.createElement("span"); label.textContent = row[0]; var value = document.createElement("b"); value.textContent = row[1]; cell.appendChild(label); cell.appendChild(value); order.appendChild(cell); });
+        card.appendChild(top); card.appendChild(reasoning); card.appendChild(order); root.appendChild(card);
+      }
+      function run() {
+        if (running) return; running = true; timers.forEach(clearTimeout); timers = []; var item = items[selected]; var button = document.getElementById("run"); button.disabled = true; button.innerHTML = '<span class="spinner"></span> Agent running'; document.getElementById("agentBadge").textContent = "Analyzing";
+        for (var index = 0; index < 5; index += 1) { (function (step) { timers.push(setTimeout(function () { setFlow(step); }, step * 360)); }(index)); }
+        timers.push(setTimeout(function () {
+          document.querySelectorAll(".flow-step").forEach(function (step) { step.classList.remove("active"); step.classList.add("done"); });
+          var maxStake = Number(document.getElementById("stake").value); var amount = Math.min(item.stake, maxStake); var blocked = item.confidence < 65 || item.direction === "BLOCK" || !enabled; renderDecision(item, blocked, amount);
+          if (blocked) { document.getElementById("agentBadge").textContent = "Blocked"; addLog("BLOCK", !enabled ? "Execution is paused; analysis completed with no order." : "Low-confidence signal rejected by the 65% policy floor."); showToast("Guardrail blocked the simulated order"); }
+          else { balance -= amount; positions += 1; risk = Math.min(99, risk + Math.round(amount / 5)); document.getElementById("balance").textContent = "$" + balance.toFixed(2); document.getElementById("positions").textContent = positions; document.getElementById("riskUsed").innerHTML = risk + "<small>%</small>"; document.getElementById("agentBadge").textContent = "Filled"; addLog("ORDER", item.direction + " · $" + amount.toFixed(2) + " · " + item.market); showToast("Demo order simulated and logged"); }
+          running = false; button.disabled = false; button.textContent = "Analyze selected signal";
+        }, 1900));
+      }
+      function toggleExecution() { enabled = !enabled; document.getElementById("executionToggle").classList.toggle("off", !enabled); addLog("POLICY", enabled ? "Agent execution resumed for simulated orders." : "Agent execution paused; analysis remains available."); showToast(enabled ? "Simulated execution enabled" : "Execution paused"); }
+      function reset() { timers.forEach(clearTimeout); timers = []; selected = 0; enabled = true; running = false; balance = 250; positions = 2; risk = 18; logs = [{ time: "09:42", kind: "READY", body: "Signal sandbox initialized with four bundled events." }, { time: "09:41", kind: "POLICY", body: "Confidence floor set to 65%; live execution disconnected." }]; document.getElementById("stake").value = 15; document.getElementById("stakeValue").textContent = "$15"; document.getElementById("executionToggle").classList.remove("off"); document.getElementById("balance").textContent = "$250.00"; document.getElementById("positions").textContent = "2"; document.getElementById("riskUsed").innerHTML = '18<small>%</small>'; document.getElementById("run").disabled = false; document.getElementById("run").textContent = "Analyze selected signal"; document.getElementById("decision").innerHTML = '<div class="decision-empty"><div><i>◎</i><b>Waiting for a signal</b><p>Choose a news item and run the agent to see its market mapping, confidence score, guardrail decision, and simulated receipt.</p></div></div>'; resetFlow(); renderNews(); renderLogs(); showToast("Demo reset"); }
+      document.getElementById("stake").addEventListener("input", function () { document.getElementById("stakeValue").textContent = "$" + this.value; }); document.getElementById("executionToggle").addEventListener("click", toggleExecution); document.getElementById("run").addEventListener("click", run); document.getElementById("reset").addEventListener("click", reset); renderNews(); renderLogs();
+    }());
+  </script>
+</body>
+</html>

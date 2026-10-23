@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Semantic Codebase Navigator — Local Demo</title>
+  <link rel="icon" href="../../assets/0xclaw_logo.png" type="image/png">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    :root { --accent: #31d7ff; --accent-2: #9eeeff; }
+    body { background: radial-gradient(circle at 50% -20%, rgba(49,215,255,.1), transparent 28rem), #070b10; }
+    .repo-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .75rem; margin-bottom: 1rem; }
+    .repo-status { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .68rem; }
+    .repo-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 9px var(--success); }
+    .workspace { overflow: hidden; }
+    .workspace-head { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .8rem; padding: .75rem; border-bottom: 1px solid var(--line); }
+    .workspace-head .tabs { width: min(340px, 100%); }
+    .search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .55rem; }
+    .search-row .input { padding-left: 2.25rem; }
+    .search-wrap { position: relative; }
+    .search-wrap::before { content: "⌕"; position: absolute; left: .8rem; top: .5rem; z-index: 2; color: var(--accent); font-size: 1.2rem; }
+    .search-meta { display: flex; justify-content: space-between; gap: .8rem; margin: .8rem 0; color: var(--muted); font-size: .65rem; }
+    .result-list { display: grid; gap: .55rem; }
+    .result { width: 100%; display: grid; grid-template-columns: 40px minmax(0,1fr) auto; gap: .75rem; align-items: start; padding: .8rem; border: 1px solid var(--line); border-radius: 9px; color: inherit; text-align: left; background: rgba(255,255,255,.018); cursor: pointer; }
+    .result:hover { border-color: rgba(49,215,255,.38); background: rgba(49,215,255,.035); }
+    .file-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; color: var(--accent); background: rgba(49,215,255,.09); font: 700 .65rem ui-monospace, monospace; }
+    .result h3 { font-size: .76rem; }
+    .path { margin-top: .25rem; color: var(--accent-2); font: .59rem ui-monospace, monospace; }
+    .snippet { margin-top: .45rem; color: var(--muted); font: .64rem/1.55 ui-monospace, monospace; }
+    .score { min-width: 46px; padding: .3rem .4rem; border-radius: 5px; color: var(--success); text-align: center; background: rgba(67,209,158,.08); font: 650 .61rem ui-monospace, monospace; }
+    .side-stack { display: grid; gap: 1rem; }
+    .language-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    .language { padding: .75rem; border: 1px solid var(--line); border-radius: 8px; }
+    .language b { display: block; margin-bottom: .25rem; font-size: .7rem; }
+    .language span { color: var(--muted); font-size: .6rem; }
+    .bar { height: 3px; margin-top: .6rem; border-radius: 99px; background: var(--line); }
+    .bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+    .graph-shell { position: relative; min-height: 570px; overflow: hidden; background: linear-gradient(rgba(49,215,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(49,215,255,.025) 1px, transparent 1px); background-size: 24px 24px; }
+    .graph-tools { position: absolute; z-index: 2; top: .8rem; left: .8rem; right: .8rem; display: flex; justify-content: space-between; gap: .5rem; pointer-events: none; }
+    .graph-tools > * { pointer-events: auto; }
+    #graph { width: 100%; height: 570px; display: block; transition: transform .2s; }
+    .edge { stroke: rgba(158,238,255,.22); stroke-width: 1.3; }
+    .edge.hot { stroke: rgba(49,215,255,.8); stroke-width: 2; }
+    .node { cursor: pointer; }
+    .node circle { fill: #111d25; stroke: rgba(49,215,255,.55); stroke-width: 1.5; transition: .18s; }
+    .node:hover circle, .node.active circle { fill: rgba(49,215,255,.18); stroke: var(--accent); stroke-width: 2.5; filter: drop-shadow(0 0 7px rgba(49,215,255,.55)); }
+    .node text { fill: #dffaff; font: 600 11px ui-monospace, monospace; pointer-events: none; }
+    .node .node-kind { fill: #708894; font-size: 8px; letter-spacing: .05em; }
+    .node-detail { position: absolute; z-index: 3; right: .8rem; bottom: .8rem; width: min(320px, calc(100% - 1.6rem)); padding: 1rem; border: 1px solid rgba(49,215,255,.25); border-radius: 9px; background: rgba(8,15,21,.94); backdrop-filter: blur(14px); }
+    .node-detail h3 { margin: .35rem 0; font-size: .82rem; }
+    .node-detail p { color: var(--muted); font-size: .67rem; line-height: 1.55; }
+    .code-modal { position: fixed; z-index: 40; inset: 0; display: none; place-items: center; padding: 1rem; background: rgba(0,0,0,.68); }
+    .code-modal.open { display: grid; }
+    .code-card { width: min(760px, 100%); max-height: 84vh; overflow: hidden; border: 1px solid rgba(49,215,255,.22); border-radius: 11px; background: #091017; box-shadow: 0 28px 90px rgba(0,0,0,.55); }
+    .code-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
+    .code-head strong { font: 650 .68rem ui-monospace, monospace; }
+    pre { max-height: 62vh; overflow: auto; padding: 1rem; color: #bee9f6; font: .69rem/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+    @media (max-width: 760px) { .repo-strip, .workspace-head { grid-template-columns: 1fr; } .workspace-head > .small { display: none; } .graph-shell, #graph { min-height: 480px; height: 480px; } }
+  </style>
+</head>
+<body>
+  <header class="demo-bar">
+    <div class="demo-brand"><span class="mark">⌘</span>Semantic Codebase Navigator</div>
+    <div class="demo-mode">Pre-indexed local dataset</div>
+    <button class="reset-demo" id="reset">Reset demo</button>
+  </header>
+
+  <main class="container">
+    <section class="hero-copy">
+      <p class="kicker">Developer intelligence / deterministic preview</p>
+      <h1>Search code by intent,<br>not exact syntax.</h1>
+      <p>This preview runs against a small pre-indexed 0xClaw codebase. Search, inspect matching files, and explore their dependency graph without embeddings or an external vector database.</p>
+    </section>
+
+    <section class="panel panel-pad repo-strip">
+      <div class="field">
+        <label for="repo">Repository</label>
+        <input class="input" id="repo" value="https://github.com/0xclaw-ai/0xClaw" aria-label="Repository URL">
+      </div>
+      <div>
+        <div class="repo-status" id="repoStatus"><i></i><span>12 files indexed locally</span></div>
+        <button class="btn secondary" id="reindex" style="margin-top:.55rem">Re-index demo</button>
+      </div>
+    </section>
+
+    <section class="panel workspace">
+      <div class="workspace-head">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-view="search" role="tab">Semantic search</button>
+          <button class="tab" data-view="graph" role="tab">Dependency graph</button>
+        </div>
+        <span class="small muted">Local index · 6 searchable symbols · no network calls</span>
+      </div>
+
+      <div id="searchView" class="panel-pad">
+        <div class="grid-2">
+          <div>
+            <div class="search-row">
+              <div class="search-wrap"><input class="input" id="query" value="approval execution pipeline" placeholder="Describe what the code should do"></div>
+              <button class="btn" id="searchButton">Search</button>
+            </div>
+            <div class="chip-row" style="margin-top:.65rem" id="presets">
+              <button class="chip active" data-query="approval execution pipeline">Approval flow</button>
+              <button class="chip" data-query="wallet token transfer security">Wallet security</button>
+              <button class="chip" data-query="agent memory persistence">Agent memory</button>
+              <button class="chip" data-query="semantic code search graph">Code graph</button>
+            </div>
+            <div class="search-meta"><span id="matchCount">0 matches</span><span>Ranked by local keyword intent</span></div>
+            <div class="result-list" id="results"></div>
+          </div>
+          <aside class="side-stack">
+            <div class="panel panel-pad">
+              <div class="panel-title"><h2>Index health</h2><span class="badge success">Ready</span></div>
+              <div class="grid-3">
+                <div class="metric"><span>Files</span><strong>12</strong></div>
+                <div class="metric"><span>Symbols</span><strong>34</strong></div>
+                <div class="metric"><span>Edges</span><strong>18</strong></div>
+              </div>
+            </div>
+            <div class="panel panel-pad">
+              <div class="panel-title"><h2>Language mix</h2><p>demo repository</p></div>
+              <div class="language-row">
+                <div class="language"><b>Python</b><span>52%</span><div class="bar"><i style="width:52%"></i></div></div>
+                <div class="language"><b>TypeScript</b><span>31%</span><div class="bar"><i style="width:31%"></i></div></div>
+                <div class="language"><b>Rust</b><span>17%</span><div class="bar"><i style="width:17%"></i></div></div>
+              </div>
+            </div>
+            <div class="panel panel-pad">
+              <p class="kicker">What is simulated?</p>
+              <p class="small muted" style="margin-top:.6rem;line-height:1.65">Indexing progress, relevance scores, and repository content are deterministic sample data. The search and graph interactions are real browser-side behavior.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <div id="graphView" class="hidden">
+        <div class="graph-shell">
+          <div class="graph-tools">
+            <div class="chip-row"><button class="chip active" data-kind="all">All</button><button class="chip" data-kind="agent">Agents</button><button class="chip" data-kind="service">Services</button></div>
+            <div class="chip-row"><button class="chip" id="zoomOut" aria-label="Zoom out">−</button><button class="chip" id="zoomIn" aria-label="Zoom in">+</button></div>
+          </div>
+          <svg id="graph" viewBox="0 0 900 570" aria-label="Code dependency graph">
+            <g id="graphScene">
+              <g id="edges"></g>
+              <g id="nodes"></g>
+            </g>
+          </svg>
+          <div class="node-detail" id="nodeDetail"><span class="badge">Select a node</span><h3>Code relationships at a glance</h3><p>Click any module to inspect its role and direct dependencies. Use the filters to isolate agents or supporting services.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="code-modal" id="codeModal" role="dialog" aria-modal="true" aria-labelledby="codeTitle">
+    <div class="code-card">
+      <div class="code-head"><strong id="codeTitle">File</strong><button class="reset-demo" id="closeCode">Close</button></div>
+      <pre id="codeBody"></pre>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      var files = [
+        { id: "supervisor", ext: "PY", title: "HumanSupervisor", path: "roboclaw/supervisor/approval.py", kind: "agent", keys: "approval execution pipeline human review approve reject proposal", summary: "Routes risky agent actions through a human approval gate before execution.", code: "class HumanSupervisor:\n    def review(self, proposal):\n        if proposal.risk > self.threshold:\n            return ApprovalRequest(proposal)\n        return self.executor.run(proposal)" },
+        { id: "executor", ext: "PY", title: "SafeActionExecutor", path: "roboclaw/runtime/executor.py", kind: "service", keys: "execution pipeline tool action safe guardrail verify", summary: "Executes approved actions and records a verifiable outcome.", code: "class SafeActionExecutor:\n    def run(self, approved_action):\n        self.policy.assert_allowed(approved_action)\n        result = self.tools.invoke(approved_action)\n        return self.audit.record(result)" },
+        { id: "wallet", ext: "RS", title: "WalletPolicy", path: "crates/wallet/src/policy.rs", kind: "service", keys: "wallet token transfer security limit signing transaction", summary: "Applies transaction limits and blocks unapproved wallet destinations.", code: "pub fn validate_transfer(tx: &Transfer, policy: &Policy) -> Result<()> {\n    policy.check_destination(&tx.to)?;\n    policy.check_daily_limit(tx.amount)?;\n    Ok(())\n}" },
+        { id: "memory", ext: "PY", title: "AgentMemory", path: "roboclaw/agent/memory.py", kind: "agent", keys: "agent memory persistence context recall store session", summary: "Stores scoped agent memories and retrieves relevant context for a new task.", code: "class AgentMemory:\n    def recall(self, task):\n        matches = self.store.search(task.embedding)\n        return [item for item in matches if item.scope == task.scope]" },
+        { id: "navigator", ext: "TS", title: "SemanticNavigator", path: "apps/navigator/search.ts", kind: "service", keys: "semantic code search graph embeddings symbols relevance", summary: "Ranks repository symbols by intent and exposes graph neighbors for exploration.", code: "export function semanticSearch(query: string, index: CodeIndex) {\n  const intent = tokenize(query);\n  return index.symbols.map(rankByIntent(intent)).sort(byScore);\n}" },
+        { id: "orchestrator", ext: "PY", title: "AgentOrchestrator", path: "roboclaw/agent/orchestrator.py", kind: "agent", keys: "agent orchestrator plan command tools memory execution workflow", summary: "Builds a plan from a command, context, tools, and approval policy.", code: "class AgentOrchestrator:\n    def plan(self, command):\n        context = self.memory.recall(command)\n        steps = self.planner.create(command, context, self.tools)\n        return self.supervisor.inspect(steps)" }
+      ];
+
+      var graphNodes = [
+        { id: "orchestrator", x: 440, y: 270, label: "Orchestrator", kind: "agent" },
+        { id: "supervisor", x: 230, y: 170, label: "Supervisor", kind: "agent" },
+        { id: "executor", x: 660, y: 170, label: "Executor", kind: "service" },
+        { id: "memory", x: 230, y: 390, label: "Memory", kind: "agent" },
+        { id: "navigator", x: 660, y: 390, label: "Navigator", kind: "service" },
+        { id: "wallet", x: 440, y: 485, label: "WalletPolicy", kind: "service" }
+      ];
+      var graphEdges = [["orchestrator","supervisor"],["orchestrator","executor"],["orchestrator","memory"],["orchestrator","navigator"],["executor","wallet"],["supervisor","executor"],["navigator","memory"]];
+      var query = document.getElementById("query");
+      var results = document.getElementById("results");
+      var toastTimer;
+      var zoom = 1;
+
+      function showToast(message) {
+        var toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+      }
+
+      function tokens(value) {
+        return value.toLowerCase().split(/[^a-z0-9]+/).filter(function (item) { return item.length > 2; });
+      }
+
+      function scoreFile(file, words) {
+        var haystack = (file.title + " " + file.keys + " " + file.summary + " " + file.path).toLowerCase();
+        var matches = words.filter(function (word) { return haystack.indexOf(word) !== -1; }).length;
+        var base = words.length ? matches / words.length : 0;
+        return Math.round(Math.min(.98, .38 + base * .58) * 100);
+      }
+
+      function renderResults() {
+        var words = tokens(query.value);
+        var ranked = files.map(function (file) {
+          return { file: file, score: scoreFile(file, words) };
+        }).sort(function (a, b) { return b.score - a.score; });
+        results.textContent = "";
+        ranked.slice(0, 4).forEach(function (item) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "result";
+          var icon = document.createElement("span");
+          icon.className = "file-icon";
+          icon.textContent = item.file.ext;
+          var copy = document.createElement("span");
+          var title = document.createElement("h3");
+          title.textContent = item.file.title;
+          var path = document.createElement("span");
+          path.className = "path";
+          path.textContent = item.file.path;
+          var snippet = document.createElement("span");
+          snippet.className = "snippet";
+          snippet.textContent = item.file.summary;
+          copy.appendChild(title);
+          copy.appendChild(path);
+          copy.appendChild(snippet);
+          var score = document.createElement("span");
+          score.className = "score";
+          score.textContent = item.score + "%";
+          button.appendChild(icon);
+          button.appendChild(copy);
+          button.appendChild(score);
+          button.addEventListener("click", function () { openCode(item.file); });
+          results.appendChild(button);
+        });
+        document.getElementById("matchCount").textContent = ranked.length + " semantic matches in 18 ms";
+      }
+
+      function openCode(file) {
+        document.getElementById("codeTitle").textContent = file.path;
+        document.getElementById("codeBody").textContent = file.code;
+        document.getElementById("codeModal").classList.add("open");
+      }
+
+      function renderGraph() {
+        var nodeLayer = document.getElementById("nodes");
+        var edgeLayer = document.getElementById("edges");
+        var namespace = "http://www.w3.org/2000/svg";
+        nodeLayer.textContent = "";
+        edgeLayer.textContent = "";
+        graphEdges.forEach(function (link) {
+          var from = graphNodes.find(function (node) { return node.id === link[0]; });
+          var to = graphNodes.find(function (node) { return node.id === link[1]; });
+          var line = document.createElementNS(namespace, "line");
+          line.setAttribute("x1", from.x); line.setAttribute("y1", from.y); line.setAttribute("x2", to.x); line.setAttribute("y2", to.y);
+          line.setAttribute("class", "edge"); line.dataset.from = from.id; line.dataset.to = to.id;
+          edgeLayer.appendChild(line);
+        });
+        graphNodes.forEach(function (node) {
+          var group = document.createElementNS(namespace, "g");
+          group.setAttribute("class", "node"); group.setAttribute("transform", "translate(" + node.x + " " + node.y + ")"); group.dataset.id = node.id; group.dataset.kind = node.kind;
+          var circle = document.createElementNS(namespace, "circle"); circle.setAttribute("r", node.id === "orchestrator" ? "53" : "44");
+          var label = document.createElementNS(namespace, "text"); label.setAttribute("text-anchor", "middle"); label.setAttribute("y", "1"); label.textContent = node.label;
+          var kind = document.createElementNS(namespace, "text"); kind.setAttribute("class", "node-kind"); kind.setAttribute("text-anchor", "middle"); kind.setAttribute("y", "17"); kind.textContent = node.kind.toUpperCase();
+          group.appendChild(circle); group.appendChild(label); group.appendChild(kind);
+          group.addEventListener("click", function () { selectNode(node.id); });
+          nodeLayer.appendChild(group);
+        });
+      }
+
+      function selectNode(id) {
+        var file = files.find(function (item) { return item.id === id; });
+        document.querySelectorAll(".node").forEach(function (node) { node.classList.toggle("active", node.dataset.id === id); });
+        document.querySelectorAll(".edge").forEach(function (edge) { edge.classList.toggle("hot", edge.dataset.from === id || edge.dataset.to === id); });
+        var direct = graphEdges.filter(function (edge) { return edge[0] === id || edge[1] === id; }).length;
+        var detail = document.getElementById("nodeDetail");
+        detail.textContent = "";
+        var badge = document.createElement("span"); badge.className = "badge"; badge.textContent = file.kind + " · " + direct + " direct links";
+        var title = document.createElement("h3"); title.textContent = file.title;
+        var copy = document.createElement("p"); copy.textContent = file.summary;
+        var button = document.createElement("button"); button.className = "btn ghost"; button.style.marginTop = ".7rem"; button.textContent = "Inspect source"; button.addEventListener("click", function () { openCode(file); });
+        detail.appendChild(badge); detail.appendChild(title); detail.appendChild(copy); detail.appendChild(button);
+      }
+
+      function switchView(name) {
+        document.querySelectorAll(".tab").forEach(function (tab) { tab.classList.toggle("active", tab.dataset.view === name); });
+        document.getElementById("searchView").classList.toggle("hidden", name !== "search");
+        document.getElementById("graphView").classList.toggle("hidden", name !== "graph");
+      }
+
+      document.querySelectorAll(".tab").forEach(function (tab) { tab.addEventListener("click", function () { switchView(tab.dataset.view); }); });
+      document.getElementById("searchButton").addEventListener("click", renderResults);
+      query.addEventListener("keydown", function (event) { if (event.key === "Enter") renderResults(); });
+      document.getElementById("presets").addEventListener("click", function (event) {
+        if (!event.target.dataset.query) return;
+        document.querySelectorAll("#presets .chip").forEach(function (chip) { chip.classList.toggle("active", chip === event.target); });
+        query.value = event.target.dataset.query;
+        renderResults();
+      });
+      document.getElementById("closeCode").addEventListener("click", function () { document.getElementById("codeModal").classList.remove("open"); });
+      document.getElementById("codeModal").addEventListener("click", function (event) { if (event.target.id === "codeModal") event.currentTarget.classList.remove("open"); });
+      document.getElementById("reindex").addEventListener("click", function () {
+        var button = this;
+        var status = document.getElementById("repoStatus");
+        button.disabled = true; button.innerHTML = '<span class="spinner"></span> Indexing';
+        status.querySelector("span").textContent = "Parsing repository snapshot…";
+        setTimeout(function () { status.querySelector("span").textContent = "Building symbol graph…"; }, 550);
+        setTimeout(function () { status.querySelector("span").textContent = "12 files indexed locally"; button.disabled = false; button.textContent = "Re-index demo"; showToast("Local demo index rebuilt"); }, 1250);
+      });
+      document.querySelectorAll("[data-kind]").forEach(function (filter) {
+        filter.addEventListener("click", function () {
+          document.querySelectorAll("[data-kind]").forEach(function (item) { item.classList.toggle("active", item === filter); });
+          document.querySelectorAll(".node").forEach(function (node) { node.style.opacity = filter.dataset.kind === "all" || node.dataset.kind === filter.dataset.kind ? "1" : ".14"; });
+        });
+      });
+      document.getElementById("zoomIn").addEventListener("click", function () { zoom = Math.min(1.35, zoom + .1); document.getElementById("graphScene").setAttribute("transform", "translate(" + (450 - 450 * zoom) + " " + (285 - 285 * zoom) + ") scale(" + zoom + ")"); });
+      document.getElementById("zoomOut").addEventListener("click", function () { zoom = Math.max(.75, zoom - .1); document.getElementById("graphScene").setAttribute("transform", "translate(" + (450 - 450 * zoom) + " " + (285 - 285 * zoom) + ") scale(" + zoom + ")"); });
+      document.getElementById("reset").addEventListener("click", function () { query.value = "approval execution pipeline"; zoom = 1; document.getElementById("graphScene").removeAttribute("transform"); switchView("search"); renderResults(); showToast("Demo reset"); });
+      renderResults();
+      renderGraph();
+    }());
+  </script>
+</body>
+</html>

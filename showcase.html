@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>0xClaw — Project Showcase</title>
+  <meta name="description" content="Interactive, deterministic previews of projects built by 0xClaw." />
+  <link rel="icon" href="assets/0xclaw_logo.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="showcase.css" />
+</head>
+<body>
+  <nav>
+    <a class="nav-brand" href="index.html">
+      <img src="assets/0xclaw_logo.png" alt="0xClaw logo" />
+      <span>0xClaw</span>
+    </a>
+    <div class="nav-actions">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="https://github.com/0xclaw-ai/0xClaw" target="_blank" rel="noopener">GitHub</a>
+      <span class="preview-label">Local preview</span>
+    </div>
+  </nav>
+
+  <main>
+    <header class="showcase-hero">
+      <p class="eyebrow"><span></span> Autonomous builds</p>
+      <h1>Projects made by <em>0xClaw.</em></h1>
+      <p class="intro">
+        Seven deterministic previews. Every interaction runs locally with sample data,
+        so there are no wallets, API keys, uploads, or external side effects.
+      </p>
+      <div class="proof-row" aria-label="Showcase properties">
+        <span>7 interactive demos</span>
+        <span>0 external APIs</span>
+        <span>Resettable state</span>
+      </div>
+    </header>
+
+    <section class="gallery" aria-labelledby="gallery-title">
+      <div class="gallery-head">
+        <div>
+          <p class="section-kicker">Explore the output</p>
+          <h2 id="gallery-title">Open a project and try it.</h2>
+        </div>
+        <div class="filters" role="group" aria-label="Filter projects">
+          <button class="filter active" data-filter="all">All</button>
+          <button class="filter" data-filter="agent">Agent</button>
+          <button class="filter" data-filter="research">Research</button>
+          <button class="filter" data-filter="developer">Developer</button>
+          <button class="filter" data-filter="health">Health</button>
+          <button class="filter" data-filter="web3">Web3</button>
+        </div>
+      </div>
+
+      <div class="project-grid">
+        <article class="project-card" data-category="health">
+          <div class="card-preview preview-clarify">
+            <div class="mini-top"><b>✦ Clarify</b><span>Sample only</span></div>
+            <div class="clarify-copy">
+              <strong>Your medical documents,<br />finally in <i>your</i> language.</strong>
+              <span></span><span></span>
+            </div>
+            <div class="mini-columns"><div></div><div></div></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Health tool</span><span class="ready-dot">Interactive</span></div>
+            <h3>Clarify</h3>
+            <p>Decode a sample medical document, extract an action plan, and explore a safe pharmacy preview.</p>
+            <button class="open-demo" data-demo="demos/clarify/index.html" data-title="Clarify">Open demo <span>↗</span></button>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="web3">
+          <div class="card-preview preview-token">
+            <div class="rocket">↗</div>
+            <strong>Token Launch<br />Intelligence</strong>
+            <div class="score-row"><span>84</span><span>72</span><span>91</span></div>
+            <div class="preview-button"></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Web3 tool</span><span class="ready-dot">Simulated</span></div>
+            <h3>Token Launch Intelligence</h3>
+            <p>Configure token parameters, receive input-driven scores, and run a clearly simulated launch.</p>
+            <button class="open-demo" data-demo="demos/token/index.html" data-title="Token Launch Intelligence">Open demo <span>↗</span></button>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="web3 agent">
+          <div class="card-preview preview-aigent">
+            <div class="mini-top"><b>◉ AIGent Protocol</b><span>Demo</span></div>
+            <div class="agent-metrics"><span>2<small>Agents</small></span><span>7<small>Runs</small></span><span>✓<small>Wallet</small></span></div>
+            <div class="command-line"><i></i><b>Swap 1 ETH and stake USDC</b></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Agent · Web3</span><span class="ready-dot">Simulated</span></div>
+            <h3>AIGent Protocol</h3>
+            <p>Create a persistent demo agent, parse distinct commands, and watch each execution step complete.</p>
+            <button class="open-demo" data-demo="demos/aigent/index.html" data-title="AIGent Protocol">Open demo <span>↗</span></button>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="developer">
+          <div class="card-preview preview-semantic">
+            <div class="mini-top"><b>⌘ Semantic Navigator</b><span>Pre-indexed</span></div>
+            <div class="graph">
+              <i style="--x:18%;--y:55%"></i><i style="--x:42%;--y:27%"></i><i style="--x:62%;--y:61%"></i><i style="--x:82%;--y:35%"></i>
+              <span></span><span></span><span></span>
+            </div>
+            <div class="search-pill">How does the agent orchestrate phases?</div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Developer tool</span><span class="ready-dot">Interactive</span></div>
+            <h3>Semantic Code Navigator</h3>
+            <p>Load a pre-indexed repository, search code semantically, and inspect its interactive dependency graph.</p>
+            <button class="open-demo" data-demo="demos/semantic/index.html" data-title="Semantic Code Navigator">Open demo <span>↗</span></button>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="agent">
+          <div class="card-preview preview-steward">
+            <div class="mini-top"><b>Steward</b><span>Approval mode</span></div>
+            <div class="approval-card"><strong>Send follow-up email</strong><span>Approve</span><i>Reject</i></div>
+            <div class="approval-card"><strong>Schedule review</strong><span>Approve</span><i>Reject</i></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Agent workflow</span><span class="ready-dot">Interactive</span></div>
+            <h3>Steward</h3>
+            <p>Trigger recurring work, approve or reject proposals, and see execution appear in a live audit timeline.</p>
+            <button class="open-demo" data-demo="demos/steward/index.html" data-title="Steward">Open demo <span>↗</span></button>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="research agent">
+          <div class="card-preview preview-litverify">
+            <div class="mini-top"><b>LitVerify</b><span>Research agents</span></div>
+            <div class="paper-line"><span>Attention Is All You Need</span><b>Verified</b></div>
+            <div class="paper-line"><span>Quantum Semantic Networks</span><b class="bad">Hallucinated</b></div>
+            <div class="cost-line"><i></i><i></i><i></i></div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Research · Agent</span><span class="ready-dot">Deterministic</span></div>
+            <h3>LitVerify</h3>
+            <p>Run a fixed research scenario, inspect citations, and watch a verification agent catch fabrication.</p>
+            <button class="open-demo" data-demo="demos/litverify/index.html" data-title="LitVerify">Open demo <span>↗</span></button>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="agent web3">
+          <div class="card-preview preview-signal">
+            <div class="mini-top"><b>Signal</b><span>Mock market</span></div>
+            <div class="signal-chart"><i></i></div>
+            <div class="trade-row"><span>BTC 1H</span><strong>UP · 84%</strong><b>10 STT</b></div>
+            <div class="ticker">NEWS → MAP → SCORE → GUARDRAIL → TRADE</div>
+          </div>
+          <div class="card-body">
+            <div class="card-meta"><span>Agent · Market</span><span class="ready-dot">Simulated</span></div>
+            <h3>Signal</h3>
+            <p>Select a news event and watch it become a scored, guarded mock market decision with narration.</p>
+            <button class="open-demo" data-demo="demos/signal/index.html" data-title="Signal">Open demo <span>↗</span></button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand">
+      <img src="assets/0xclaw_logo.png" alt="0xClaw" />
+      <span>0xClaw showcase preview</span>
+    </div>
+    <p>All project actions use local, deterministic sample data.</p>
+  </footer>
+
+  <dialog class="demo-dialog" id="demo-dialog">
+    <div class="dialog-shell">
+      <div class="dialog-bar">
+        <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="dialog-title">
+          <strong id="dialog-title">Project demo</strong>
+          <span>LOCAL SIMULATION</span>
+        </div>
+        <div class="dialog-actions">
+          <button id="reload-demo" type="button" title="Reset demo">Reset</button>
+          <a id="open-full" href="#" target="_blank" rel="noopener">Open full screen</a>
+          <button id="close-demo" class="close-demo" type="button" aria-label="Close demo">×</button>
+        </div>
+      </div>
+      <iframe id="demo-frame" title="Interactive project demo" sandbox="allow-scripts"></iframe>
+    </div>
+  </dialog>
+
+  <script src="showcase.js"></script>
+</body>
+</html>
