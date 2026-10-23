@@ -100,3 +100,29 @@ body{font-size:19px}.site-header nav{font-size:17px}.button,.text-link{font-size
 .headline-stage[data-phase="3"]::before{background-image:linear-gradient(108deg,#4779bc 0%,#529eae 23%,#7b70b7 46%,#b0955c 72%,#9c72a8 100%)}
 @media(min-width:1051px){.hero{grid-template-columns:1fr 1fr;gap:24px;padding-inline:16px}}
 @media(forced-colors:active){.headline-stage[data-phase="3"]{background-image:none}}
+
+/* Resource destination: a distinct midnight-blue close to the lavender page. */
+.social-icon{width:20px;height:20px;display:block;flex:none}
+.site-header .social-link{gap:9px}
+.resource-footer{background:linear-gradient(120deg,#27213e 0%,#19223d 60%,#11273e 100%);color:#f2edf6;padding:78px 0 28px;border-top:1px solid #aca5d147}
+.resource-footer::before{content:none}
+.footer-heading{display:flex;justify-content:space-between;align-items:end;gap:40px;padding-bottom:54px;border-bottom:1px solid #c7bfd226}
+.footer-heading h2{font-size:clamp(42px,4.6vw,68px);line-height:1.12}
+.resource-footer .type-accent{color:#b4afe7}
+.footer-heading>p{color:#c4c4d4;font-size:19px;line-height:1.65;padding-bottom:5px;min-width:220px}
+.footer-grid{display:grid;grid-template-columns:1.65fr 1fr 1fr;gap:64px;padding:52px 0 58px}
+.footer-identity .brand{width:190px}
+.footer-identity p{color:#b9bacd;font-size:16px;line-height:1.7;margin-top:24px}
+.resource-footer .resource-column{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:18px}
+.resource-column h3{font-size:28px;font-weight:500;margin-bottom:15px;color:#f2edf6}
+.resource-footer nav a{color:#c6c7d8;min-height:44px}
+.resource-footer nav a:hover{color:#fff;text-decoration:underline;text-underline-offset:6px}
+.footer-base{display:flex;align-items:center;gap:32px;padding-top:22px;border-top:1px solid #c7bfd226;font-size:14px;color:#aeb2c9}
+.resource-footer .footer-socials{display:flex;gap:12px;margin-right:auto}
+.footer-socials .social-link{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s,color .2s}
+.footer-socials .social-icon{width:23px;height:23px}
+.resource-footer .footer-socials a:hover{background:#b4afe71a}
+.footer-base>a{min-height:44px;display:inline-flex;align-items:center}
+.resource-footer :is(a,button):focus-visible{outline-color:#c7c1ff}
+@media(max-width:900px){.footer-grid{grid-template-columns:1.25fr 1fr 1fr;gap:30px}.site-header nav{gap:18px}}
+@media(max-width:700px){.site-header{flex-wrap:wrap;justify-content:center;gap:8px;padding-block:16px}.site-header nav{width:100%;justify-content:center;gap:clamp(12px,3vw,22px);font-size:14px;flex-wrap:wrap}.site-header nav a:first-child{display:inline-flex}.site-header .social-link{gap:6px}.site-header .social-icon{width:17px;height:17px}.resource-footer{padding:52px 0 24px}.footer-heading{display:block;padding-bottom:34px}.footer-heading h2{font-size:42px}.footer-heading>p{font-size:17px;margin-top:22px}.footer-grid{grid-template-columns:1fr 1fr;gap:30px 20px;padding:34px 0}.footer-identity{grid-column:1/-1}.footer-identity .brand{width:170px}.footer-identity p{margin-top:18px}.resource-footer .resource-column{font-size:16px}.resource-column h3{font-size:26px;margin-bottom:8px}.footer-base{flex-wrap:wrap;gap:8px 20px}.resource-footer .footer-socials{flex-basis:100%;margin:0 0 8px;gap:12px}.footer-base>p{margin-right:auto}}
