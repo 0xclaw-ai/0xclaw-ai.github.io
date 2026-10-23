@@ -83,3 +83,20 @@ body{font-size:19px}.site-header nav{font-size:17px}.button,.text-link{font-size
 @media(forced-colors:active){.headline-stage::before,.headline-stage::after{display:none}}
 /* Distribute the full spectrum across the actual phrase, not the wider grid track. */
 .headline-stage{justify-self:start;width:max-content;max-width:100%}
+
+/* Larger, more tactile calls to action, in the existing plum palette. */
+.button{position:relative;isolation:isolate;overflow:hidden;min-height:56px;padding:13px 25px;font-size:19px;font-weight:500;letter-spacing:-.015em;line-height:1.45;border:1px solid #ffffff24;border-radius:5px;background:linear-gradient(135deg,#584072,#45305e);color:#fff3d4;box-shadow:inset 0 1px 0 #ffffff14,0 3px 8px #3020440a;transition:transform .25s var(--ease),box-shadow .35s ease}
+.button::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(115deg,#b4a0d830,transparent 65%);opacity:0;transition:opacity .4s ease}
+.button:hover{background:linear-gradient(135deg,#584072,#45305e);transform:translateY(-2px);box-shadow:inset 0 1px 0 #ffffff24,0 7px 18px #3020441a}
+.button:hover::before,.button:focus-visible::before{opacity:1}
+.button:focus-visible{outline:2px solid #785b9b;outline-offset:4px}
+.button:active{transform:translateY(0);box-shadow:inset 0 1px 0 #ffffff14}
+.stage-controls>div{flex-wrap:wrap}
+@media(max-width:700px){.button{font-size:18px;min-height:54px;padding:13px 21px}.stage-controls button{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.button:hover{transform:none}}
+
+/* The prize is a slightly richer focal point, with antique gold in the ink. */
+.headline-stage[data-phase="3"]{background-image:linear-gradient(108deg,#507bb6 0%,#5698a9 23%,#7b77b2 46%,#a68e61 72%,#9474a5 100%)}
+.headline-stage[data-phase="3"]::before{background-image:linear-gradient(108deg,#4779bc 0%,#529eae 23%,#7b70b7 46%,#b0955c 72%,#9c72a8 100%)}
+@media(min-width:1051px){.hero{grid-template-columns:1fr 1fr;gap:24px;padding-inline:16px}}
+@media(forced-colors:active){.headline-stage[data-phase="3"]{background-image:none}}

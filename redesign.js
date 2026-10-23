@@ -19,7 +19,7 @@ function select(index){
 }
 function schedule(){
   clearTimeout(timer);
-  if(ready&&!reduced.matches&&!holding&&!document.hidden&&inView)timer=setTimeout(()=>{select((current+1)%buttons.length);schedule()},6500);
+  if(ready&&!reduced.matches&&!holding&&!document.hidden&&inView)timer=setTimeout(()=>{select((current+1)%buttons.length);schedule()},4000);
 }
 buttons.forEach((button,index)=>button.addEventListener('click',()=>{select(index);schedule()}));
 art.addEventListener('pointerenter',()=>{holding=true;schedule()});
@@ -104,7 +104,7 @@ function showWorkflowPhase(index){
 }
 function scheduleWorkflow(){
   clearTimeout(workflowTimer);
-  if(workflowVisible&&!reduced.matches&&!document.hidden)workflowTimer=setTimeout(()=>{showWorkflowPhase((workflowPhase+1)%7);scheduleWorkflow()},2200);
+  if(workflowVisible&&!reduced.matches&&!document.hidden)workflowTimer=setTimeout(()=>{showWorkflowPhase((workflowPhase+1)%7);scheduleWorkflow()},1400);
 }
 showWorkflowPhase(0);
 if('IntersectionObserver'in window)new IntersectionObserver(entries=>{workflowVisible=entries[0].isIntersecting;scheduleWorkflow()},{threshold:.55}).observe(workflow);
