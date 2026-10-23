@@ -110,3 +110,29 @@ showWorkflowPhase(0);
 if('IntersectionObserver'in window)new IntersectionObserver(entries=>{workflowVisible=entries[0].isIntersecting;scheduleWorkflow()},{threshold:.55}).observe(workflow);
 document.addEventListener('visibilitychange',scheduleWorkflow);
 reduced.addEventListener('change',scheduleWorkflow);
+
+
+// Quiet multicolour ink at rest; saturated spectrum plus a local pointer spotlight.
+const inkTitle=document.querySelector('.headline-stack');
+let inkFrame=0,inkPoint=null;
+function placeInkLight(event){
+  const box=inkTitle.getBoundingClientRect();
+  inkPoint={x:event.clientX-box.left,y:event.clientY-box.top};
+  if(!inkFrame)inkFrame=requestAnimationFrame(()=>{
+    inkTitle.style.setProperty('--light-x',`${inkPoint.x}px`);
+    inkTitle.style.setProperty('--light-y',`${inkPoint.y}px`);
+    inkFrame=0;
+  });
+}
+inkTitle.addEventListener('pointerenter',event=>{
+  if(event.pointerType==='touch')return;
+  placeInkLight(event);inkTitle.classList.add('ink-hover');
+});
+inkTitle.addEventListener('pointermove',event=>{
+  if(reduced.matches||event.pointerType==='touch')return;
+  placeInkLight(event);
+});
+inkTitle.addEventListener('pointerleave',()=>{
+  cancelAnimationFrame(inkFrame);inkFrame=0;
+  inkTitle.classList.remove('ink-hover');
+});
