@@ -19,7 +19,7 @@ function select(index){
 }
 function schedule(){
   clearTimeout(timer);
-  if(ready&&!reduced.matches&&!holding&&!document.hidden&&inView)timer=setTimeout(()=>{select((current+1)%buttons.length);schedule()},4000);
+  if(ready&&!reduced.matches&&!holding&&!document.hidden&&inView)timer=setTimeout(()=>{select((current+1)%buttons.length);schedule()},3000);
 }
 buttons.forEach((button,index)=>button.addEventListener('click',()=>{select(index);schedule()}));
 art.addEventListener('pointerenter',()=>{holding=true;schedule()});
