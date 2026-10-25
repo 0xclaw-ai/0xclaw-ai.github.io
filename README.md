@@ -18,13 +18,11 @@ Landing page for [0xClaw](https://github.com/0xclaw-ai/0xClaw) — Autonomous AI
 
 ## Development
 
-Static site with no build step required. The current homepage stays in `index.html`; the project-gallery preview is isolated in `showcase.html`.
+Static site with no build step required. The homepage lives in `index.html`. `redesign.css` and `redesign.js` provide the layout and media interactions; `brand.css` and `brand.js` add the plum palette, pixel lettering, ASCII backdrop, and workflow styling.
 
 ```bash
 # Serve locally
-npx serve .
-# or
-python3 -m http.server 8080
+PORT=8080 node tools/preview-server.mjs
 ```
 
 Then open:
@@ -44,7 +42,9 @@ Push to `main`. GitHub Pages auto-deploys from repository root.
 
 ```
 .
-├── index.html            # Existing public homepage (unchanged)
+├── index.html            # Public homepage
+├── brand.css             # Plum theme and display typography
+├── brand.js              # ASCII backdrop and responsive lettering
 ├── showcase.html         # Local project-gallery preview
 ├── showcase.css
 ├── showcase.js
@@ -62,6 +62,18 @@ Push to `main`. GitHub Pages auto-deploys from repository root.
 │   └── 0xClaw_combine.png
 └── README.md
 ```
+
+## Previous homepage
+
+The light editorial homepage is preserved at commit [`35ca654337cd1cb14eb973f3b94692e88a893085`](https://github.com/0xclaw-ai/0xclaw-ai.github.io/tree/35ca654337cd1cb14eb973f3b94692e88a893085), deployed on October 23, 2026. To preview it without changing the current branch:
+
+```bash
+git worktree add --detach ../0xclaw-light-preview 35ca654337cd1cb14eb973f3b94692e88a893085
+cd ../0xclaw-light-preview
+PORT=8081 node tools/preview-server.mjs
+```
+
+GitHub Pages publishes `main`; pushing a design branch does not replace the live site. Historical commits retain the source, but do not automatically receive separate public preview URLs.
 
 ## License
 
