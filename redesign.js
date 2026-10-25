@@ -95,17 +95,32 @@ document.querySelectorAll('video').forEach(video=>{
 const workflow=document.querySelector('.workflow-drawing');
 const phaseLabels=[...workflow.querySelectorAll('[data-workflow-phase]')];
 const phaseNodes=[...workflow.querySelectorAll('.phase-node')];
+const phaseButtons=[...workflow.querySelectorAll('[data-workflow-button]')];
 let workflowPhase=0,workflowVisible=false,workflowTimer;
 function showWorkflowPhase(index){
   workflowPhase=index;
   workflow.style.setProperty('--phase-progress',String(index/6));
-  phaseLabels.forEach((label,i)=>label.classList.toggle('is-current',i===index));
+  phaseLabels.forEach((label,i)=>{label.classList.toggle('is-current',i===index);label.setAttribute('aria-hidden',String(i!==index))});
+  phaseButtons.forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
   phaseNodes.forEach((node,i)=>{node.classList.toggle('is-current',i===index);node.classList.toggle('is-complete',i<index)});
 }
 function scheduleWorkflow(){
   clearTimeout(workflowTimer);
   if(workflowVisible&&!reduced.matches&&!document.hidden)workflowTimer=setTimeout(()=>{showWorkflowPhase((workflowPhase+1)%7);scheduleWorkflow()},1400);
 }
+phaseButtons.forEach((button,index)=>{
+  const select=next=>{showWorkflowPhase(next);scheduleWorkflow()};
+  button.addEventListener('click',()=>select(index));
+  button.addEventListener('keydown',event=>{
+    let next;
+    if(event.key==='ArrowRight')next=(index+1)%phaseLabels.length;
+    else if(event.key==='ArrowLeft')next=(index+phaseLabels.length-1)%phaseLabels.length;
+    else if(event.key==='Home')next=0;
+    else if(event.key==='End')next=phaseLabels.length-1;
+    else return;
+    event.preventDefault();phaseButtons[next].focus();select(next);
+  });
+});
 showWorkflowPhase(0);
 if('IntersectionObserver'in window)new IntersectionObserver(entries=>{workflowVisible=entries[0].isIntersecting;scheduleWorkflow()},{threshold:.55}).observe(workflow);
 document.addEventListener('visibilitychange',scheduleWorkflow);
