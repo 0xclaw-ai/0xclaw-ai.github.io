@@ -1,61 +1,195 @@
+// The existing mascot supplies the silhouette; every visible mark is an ASCII glyph.
+(() => {
+  const figure = document.querySelector('.ascii-mascot');
+  if (!figure) return;
+  const canvas = figure.querySelector('canvas');
+  const source = figure.querySelector('img');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const contrast = matchMedia('(forced-colors: active)');
+  const cells = [];
+  const pointer = { x: -1000, y: -1000 };
+  let ready = false, visible = false, raf = 0, last = 0, time = 0;
+  function draw() {
+    if (!ready) return;
+    ctx.clearRect(0, 0, 538, 464);
+    ctx.font = '600 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const cell of cells) {
+      const sweep = Math.exp(-Math.pow((cell.x + cell.y * .6 - (time * 50 % 1050 - 180)) / 65, 2));
+      const hover = reduced.matches ? 0 : Math.exp(-((cell.x - pointer.x) ** 2 + (cell.y - pointer.y) ** 2) / 4500);
+      const breath = reduced.matches ? 0 : .04 * Math.sin(time * 1.2 + cell.y * .014);
+      const light = reduced.matches ? 0 : sweep * .16 + hover * .2;
+      ctx.fillStyle = `rgba(${cell.color},${Math.min(1, cell.alpha + light + breath)})`;
+      ctx.fillText(cell.char, cell.x, cell.y);
+    }
+  }
+  function tick(now) {
+    raf = 0;
+    if (!ready || !visible || document.hidden || reduced.matches || contrast.matches) return;
+    if (now - last > 65) {
+      time += Math.min((now - last) / 1000, .12);
+      last = now;
+      draw();
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  function sync() {
+    cancelAnimationFrame(raf); raf = 0; last = performance.now(); draw();
+    if (ready && visible && !document.hidden && !reduced.matches && !contrast.matches) raf = requestAnimationFrame(tick);
+  }
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(figure.clientWidth * dpr);
+    canvas.height = Math.round(figure.clientHeight * dpr);
+    ctx.setTransform(canvas.width / 538, 0, 0, canvas.height / 464, 0, 0);
+    draw();
+  }
+  function sample() {
+    if (ready || !source.naturalWidth) return;
+    const sampling = document.createElement('canvas');
+    sampling.width = 90; sampling.height = 58;
+    const pixels = sampling.getContext('2d', { willReadFrequently: true });
+    if (!pixels) return;
+    pixels.drawImage(source, 0, 0, 90, 58);
+    const data = pixels.getImageData(0, 0, 90, 58).data;
+    const chars = '.,:;+=x*#';
+    for (let y = 0; y < 58; y++) for (let x = 0; x < 90; x++) {
+      const i = (y * 90 + x) * 4;
+      const [r, g, b, a] = data.subarray(i, i + 4);
+      if (a < 100) continue;
+      const value = Math.max(r, g, b) / 255;
+      const gold = r > b * 1.3 && g > b * 1.2;
+      const cyan = g > r * 1.3 && b > r * 1.3 && g > 110;
+      cells.push({ x: (x + .5) * 538 / 90, y: (y + .5) * 8,
+        char: chars[Math.min(chars.length - 1, Math.floor(value * 8))],
+        color: gold ? '224,194,137' : cyan ? '158,229,239' : '202,179,233',
+        alpha: (.12 + .88 * Math.pow(value, .72)) * a / 255 });
+    }
+    ready = true; resize(); figure.classList.add('is-ready'); sync();
+  }
+  source.addEventListener('load', sample, { once: true });
+  if (source.complete) sample();
+  new ResizeObserver(resize).observe(figure);
+  new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); }).observe(figure);
+  figure.addEventListener('pointermove', e => {
+    const r = figure.getBoundingClientRect();
+    pointer.x = (e.clientX - r.left) / r.width * 538;
+    pointer.y = (e.clientY - r.top) / r.height * 464;
+  }, { passive: true });
+  figure.addEventListener('pointerleave', () => { pointer.x = pointer.y = -1000; });
+  reduced.addEventListener('change', sync);
+  contrast.addEventListener('change', sync);
+  document.addEventListener('visibilitychange', sync);
+})();
+
 // ASCII backdrop and responsive logo-inspired lettering.
 (() => {
-  const canvas = document.querySelector('.ascii-backdrop');
-  const hero = canvas.closest('.hero');
-  const ctx = canvas.getContext('2d');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  let width=0,height=0,raf=0,last=0,time=0,visible=true,paused=motion.matches;
-  const pointer={x:-1000,y:-1000};
-  const chars=' .,:;+=x*';
-  function draw(){
-    ctx.clearRect(0,0,width,height);
-    const rgb=getComputedStyle(document.body).getPropertyValue('--ascii-ink').trim();
-    const copy=hero.querySelector('.hero-copy').getBoundingClientRect();
-    const area=hero.getBoundingClientRect();
-    const cx=copy.left-area.left+copy.width*.45;
-    const cy=copy.top-area.top+copy.height*.48;
-    // Open space around readable content; detail lives in the surrounding margins.
-    const quiet=(x,y)=>1-.94*Math.exp(-Math.pow((x-cx)/(copy.width*.64),6)-Math.pow((y-cy)/(copy.height*.69),6));
-    ctx.lineWidth=.65;
-    const step=100;
-    for(let x=22;x<width*.62;x+=step){
-      ctx.strokeStyle=`rgba(${rgb},.075)`;
-      ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke();
-    }
-    for(let y=25;y<height;y+=step){
-      ctx.strokeStyle=`rgba(${rgb},.065)`;
-      ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width*.60,y);ctx.stroke();
-    }
-    ctx.font='11px monospace';ctx.textAlign='center';
-    for(let y=13;y<height;y+=14){
-      for(let x=8;x<width*.65;x+=10){
-        const wave=Math.sin(x*.013+y*.006+time*.17)+.64*Math.cos(y*.019-x*.007-time*.12)+.35*Math.sin(x*.031+y*.023);
-        const band=Math.max(0,1-Math.abs(wave-.55)*1.6);
-        const edge=quiet(x,y);
-        const hover=Math.exp(-((x-pointer.x)**2+(y-pointer.y)**2)/4200);
-        const alpha=(.27*band+.14*hover)*edge;
-        if(alpha<.025)continue;
-        const index=Math.min(chars.length-1,1+Math.floor((band*.7+hover*.3)*(chars.length-2)));
-        ctx.fillStyle=`rgba(${rgb},${alpha})`;
-        ctx.fillText(chars[index],x,y);
+  const contrast = matchMedia('(forced-colors: active)');
+  document.querySelectorAll('.ascii-backdrop').forEach(canvas => {
+    const section = canvas.parentElement;
+    const story = section.classList.contains('story');
+    const process = section.classList.contains('process');
+    const panel = section.classList.contains('signal-workflow');
+    const copySelector = panel ? '.workflow-labels, .workflow-controls' : story ? '#story-title, .story-copy, .story-drawing figcaption, .story-drawing svg' : process ? '#process-title, .process-heading > p, .signal-workflow, .process-steps article' : '.hero-copy, .stage-controls, .caption-stack';
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let width = 0, height = 0, raf = 0, last = 0, time = story ? 9 : process ? 18 : 0;
+    let visible = false, masks = [], ink = '';
+    const pointer = { x: -1000, y: -1000 };
+    const chars = '.,:;+=x*';
+    const quiet = (x, y) => masks.reduce((level, box) => {
+      const dx = Math.max(box.left - x, 0, x - box.right);
+      const dy = Math.max(box.top - y, 0, y - box.bottom);
+      return level * (1 - box.strength * Math.exp(-(dx * dx + dy * dy) / 1100));
+    }, 1);
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      if (contrast.matches) return;
+      const extent = panel || story || process || width < 700 ? width : width * .67;
+      const edgeFade = (x, y) => Math.min(1, y / 36, (height - y) / 42) *
+        Math.min(1, (extent - x) / 65);
+      // Small cells form drifting ribbons; text areas remain deliberately quiet.
+      ctx.font = '12px monospace';
+      ctx.textAlign = 'center';
+      for (let y = 14; y < height; y += 16) {
+        for (let x = 8; x < extent; x += 12) {
+          const wave = Math.sin(x * .013 + y * .006 + time * .28) +
+            .64 * Math.cos(y * .019 - x * .007 - time * .21) +
+            .35 * Math.sin(x * .031 + y * .023 + time * .09);
+          const band = Math.max(0, 1 - Math.abs(wave - .55) * 1.6);
+          const hover = Math.exp(-((x - pointer.x) ** 2 + (y - pointer.y) ** 2) / 4200);
+          const signal = Math.pow(Math.max(0, Math.sin(x * .008 - y * .011 - time * .65)), 10);
+          const alpha = (.46 * band + .18 * hover + .13 * signal * band) * quiet(x, y) * edgeFade(x, y);
+          if (alpha < .025) continue;
+          const index = Math.min(chars.length - 1, Math.floor((band * .8 + hover * .2) * chars.length));
+          ctx.fillStyle = `rgba(${signal > .6 ? '166,212,229' : ink},${alpha})`;
+          ctx.fillText(chars[index], x, y);
+        }
+      }
+      // The grid is subordinate to the characters, and fades beneath the copy too.
+      if (panel) return;
+      ctx.lineWidth = .7;
+      for (let x = 22; x < extent; x += 100) {
+        for (let y = 8; y < height - 8; y += 16) {
+          ctx.strokeStyle = `rgba(${ink},${.13 * quiet(x, y) * edgeFade(x, y)})`;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 16); ctx.stroke();
+        }
+      }
+      for (let y = 25; y < height; y += 100) {
+        for (let x = 0; x < extent - 16; x += 16) {
+          ctx.strokeStyle = `rgba(${ink},${.11 * quiet(x, y) * edgeFade(x, y)})`;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 16, y); ctx.stroke();
+        }
       }
     }
-    // A single signal follows the underlying grid, like work advancing through stages.
-    const progress=(time*.075)%1;
-    const px=22+Math.floor(progress*4)*100;
-    const py=25+((progress*4)%1)*100;
-    ctx.strokeStyle=`rgba(${rgb},.3)`;ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(px-4,py);ctx.lineTo(px+4,py);ctx.moveTo(px,py-4);ctx.lineTo(px,py+4);ctx.stroke();
-  }
-  function tick(now){raf=0;if(paused||!visible||document.hidden)return;if(now-last>65){time+=Math.min((now-last)/1000,.12);last=now;draw()}raf=requestAnimationFrame(tick)}
-  function sync(){cancelAnimationFrame(raf);raf=0;last=performance.now();draw();if(!paused&&visible&&!document.hidden)raf=requestAnimationFrame(tick)}
-  function resize(){width=hero.clientWidth;height=hero.clientHeight;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=width*dpr;canvas.height=height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw()}
-  new ResizeObserver(resize).observe(hero);
-  new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;sync()}).observe(hero);
-  hero.addEventListener('pointermove',e=>{const r=hero.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top},{passive:true});
-  hero.addEventListener('pointerleave',()=>{pointer.x=pointer.y=-1000});
-  motion.addEventListener('change',()=>{paused=motion.matches;sync()});
-  document.addEventListener('visibilitychange',sync);resize();sync();
+    function tick(now) {
+      raf = 0;
+      if (motion.matches || contrast.matches || !visible || document.hidden) return;
+      if (now - last > 65) {
+        time += Math.min((now - last) / 1000, .12);
+        last = now;
+        draw();
+      }
+      raf = requestAnimationFrame(tick);
+    }
+    function sync() {
+      cancelAnimationFrame(raf); raf = 0;
+      last = performance.now(); draw();
+      if (!motion.matches && !contrast.matches && visible && !document.hidden) raf = requestAnimationFrame(tick);
+    }
+    function resize() {
+      width = section.clientWidth; height = section.clientHeight;
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = width * dpr; canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ink = getComputedStyle(section).getPropertyValue('--ascii-ink').trim();
+      const area = section.getBoundingClientRect();
+      masks = [...section.querySelectorAll(copySelector)].map(el => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left - area.left - 10, right: r.right - area.left + 10,
+          top: r.top - area.top - 8, bottom: r.bottom - area.top + 8,
+          strength: el.tagName.toLowerCase() === 'svg' ? .68 : .97 };
+      });
+      draw();
+    }
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(section);
+    section.querySelectorAll(copySelector).forEach(el => resizeObserver.observe(el));
+    new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); }).observe(section);
+    section.addEventListener('pointermove', e => {
+      const r = section.getBoundingClientRect(); pointer.x = e.clientX - r.left; pointer.y = e.clientY - r.top;
+    }, { passive: true });
+    section.addEventListener('pointerleave', () => { pointer.x = pointer.y = -1000; });
+    motion.addEventListener('change', sync);
+    contrast.addEventListener('change', sync);
+    document.addEventListener('visibilitychange', sync);
+    document.fonts.ready.then(resize);
+    resize(); sync();
+  });
 })();
 
 (() => {
