@@ -94,6 +94,7 @@
     const story = section.classList.contains('story');
     const process = section.classList.contains('process');
     const panel = section.classList.contains('signal-workflow');
+    const hero = section.classList.contains('hero');
     const copySelector = panel ? '.workflow-labels, .workflow-controls' : story ? '#story-title, .story-copy, .story-drawing figcaption, .story-drawing svg' : process ? '#process-title, .process-heading > p, .signal-workflow, .process-steps article' : '.hero-copy, .stage-controls, .caption-stack';
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -109,7 +110,7 @@
     function draw() {
       ctx.clearRect(0, 0, width, height);
       if (contrast.matches) return;
-      const extent = panel || story || process || width < 700 ? width : width * .67;
+      const extent = width;
       const edgeFade = (x, y) => Math.min(1, y / 36, (height - y) / 42) *
         Math.min(1, (extent - x) / 65);
       // Small cells form drifting ribbons; text areas remain deliberately quiet.
@@ -123,7 +124,7 @@
           const band = Math.max(0, 1 - Math.abs(wave - .55) * 1.6);
           const hover = Math.exp(-((x - pointer.x) ** 2 + (y - pointer.y) ** 2) / 4200);
           const signal = Math.pow(Math.max(0, Math.sin(x * .008 - y * .011 - time * .65)), 10);
-          const alpha = (.46 * band + .18 * hover + .13 * signal * band) * quiet(x, y) * edgeFade(x, y);
+          const alpha = ((hero ? .64 : .46) * band + .18 * hover + (hero ? .22 : .13) * signal * band) * quiet(x, y) * edgeFade(x, y);
           if (alpha < .025) continue;
           const index = Math.min(chars.length - 1, Math.floor((band * .8 + hover * .2) * chars.length));
           ctx.fillStyle = `rgba(${signal > .6 ? '166,212,229' : ink},${alpha})`;
