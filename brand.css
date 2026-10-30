@@ -230,3 +230,9 @@ body:not([data-palette="smoke"]) .stage-controls button[aria-pressed=true]{borde
 .publication-badge-copy strong{font-size:16px}
 
 @media(max-width:700px){.hero-copy .publication-badge{gap:10px;padding:8px 11px}.publication-badge img{width:27px}.publication-badge-copy{padding-left:10px}.publication-badge-copy strong{font-size:14px}.publication-badge-copy>span{font-size:9px}}
+
+/* Matching research and hackathon credits. */
+.hero-badges{display:flex;flex-wrap:wrap;align-items:stretch;gap:12px;margin-bottom:24px}
+.hero-copy .hero-badges .publication-badge{margin:0}
+.publication-badge .champion-icon{display:block;width:30px;height:30px;flex-shrink:0}
+@media(max-width:700px){.publication-badge .champion-icon{width:27px;height:27px}}
